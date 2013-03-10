@@ -5,7 +5,7 @@ import android.util.Log;
 
 /***
  * Takes care of handling the OpenGL ES 2.0 shaders
- * @author Mark van der Wal
+ * @author Wildrune
  *
  */
 public class ShaderProgram 

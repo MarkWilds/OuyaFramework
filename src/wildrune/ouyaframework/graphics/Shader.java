@@ -5,7 +5,7 @@ import android.util.Log;
 
 /***
  * OpenGL ES 2.0 shader
- * @author Mark van der Wal
+ * @author Wildrune
  * @version 0.1
  *
  */

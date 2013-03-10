@@ -2,7 +2,7 @@ package wildrune.ouyaframework.graphics;
 
 /***
  * Class managing the graphics
- * @author Mark
+ * @author Wildrune
  *
  */
 public class Graphics 

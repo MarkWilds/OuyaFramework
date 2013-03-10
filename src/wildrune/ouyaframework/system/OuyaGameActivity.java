@@ -14,7 +14,7 @@ import android.app.Activity;
 
 /**
  * Abstract class that handles the game
- * @author Mark
+ * @author Wildrune
  *
  */
 public abstract class OuyaGameActivity extends Activity implements GLSurfaceView.Renderer
@@ -24,29 +24,31 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	private GLSurfaceView gameView;
 	
 	// start flags
-	private boolean debugMode;
-	private boolean lowResMode;
+	protected boolean isDebugMode;
+	protected boolean isLowResMode;
+	protected boolean isFixedTimeStep;
 	
 	// ==================== SUBSYSTEMS ==========================
-	protected Graphics gameGraphics;
-	protected FileIO gameFileIO;
+	protected Graphics 	gameGraphics;
+	protected FileIO 	gameFileIO;
+	private Clock		gameClock;
 	
 	// =====================  ABSTRACT METHODS ======================
 	protected abstract void Create();
 	protected abstract void Dispose();
-	protected abstract void Update();
+	protected abstract void Update(float deltatime);
 	protected abstract void Draw();
 	
 	// =====================  SYSTEM METHODS ======================
 	/***
 	 * Default constructor
 	 */
-	public OuyaGameActivity(boolean debug, boolean lowres)
+	public OuyaGameActivity()
 	{
 		// default state
 		isGameStopping = false;
-		lowResMode = lowres;
-		debugMode = debug;
+		isLowResMode = false;
+		isDebugMode = false;
 	}
 	
 	/***
@@ -72,12 +74,12 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		setContentView(gameView);
 
 		// if we want better debug messages
-		if(debugMode){
+		if(isDebugMode){
 			gameView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		}
 
 		// if we want 720p or 1080p
-		if(lowResMode){
+		if(isLowResMode){
 			gameView.getHolder().setFixedSize(1280, 720);
 			usedWidth = 1280;
 			usedHeight = 720;
@@ -86,6 +88,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		// initialize subsystems
 		gameGraphics = new Graphics(usedWidth, usedHeight);
 		gameFileIO = new FileIO(this);
+		gameClock = new Clock();
 		OuyaController.init(this);
 
 		// when all configurations are set we start the rendering thread
@@ -98,14 +101,12 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	@Override
 	protected void onPause() 
 	{
-		// tell the renderview to pause
+		super.onPause();
 		gameView.onPause();
 		
 		// check if we are finishing or not
 		if(isFinishing())
 			Dispose();
-		
-		super.onPause();
 	}
 
 	/***
@@ -127,6 +128,10 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	{			
 		// call subclass create method
 		this.Create();
+		
+		// start our clock
+		// IS THIS THE RIGHT PLACE??
+		gameClock.Start();
 	}
 
 	/***
@@ -158,8 +163,11 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 			});
 		}
 		
+		// update clock
+		gameClock.Tick();
+		
 		// main game loop methods
-		Update();
+		Update( gameClock.GetDeltaTime() );
 		Draw();
 	}
 	
