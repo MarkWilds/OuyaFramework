@@ -1,11 +1,11 @@
 package wildrune.ouyaframework.math;
 
 /***
- * Vector 2D for game math
+ * Matrix 4x4 for game math
  * @author Wildrune
  *
  */
-public class Vector2 
+public class Mat4 
 {
 
 }
