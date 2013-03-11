@@ -20,23 +20,26 @@ import android.app.Activity;
 public abstract class OuyaGameActivity extends Activity implements GLSurfaceView.Renderer
 {
 	// data members
-	private volatile boolean isGameStopping;
-	private GLSurfaceView gameView;
+	private volatile boolean 	isGameStopping;
+	private GLSurfaceView 		gameView;
 	
 	// start flags
 	protected boolean isDebugMode;
 	protected boolean isLowResMode;
-	protected boolean isFixedTimeStep;
 	
 	// ==================== SUBSYSTEMS ==========================
-	protected Graphics 	gameGraphics;
-	protected FileIO 	gameFileIO;
-	private Clock		gameClock;
+	protected Graphics 		gameGraphics;
+	protected FileIO 		gameFileIO;
+	private Clock			gameClock;
+	
+	// ===================== GAME TIMER ==========================
+	protected Clock.Timer 	gameTimer;
+	private float			mAccumulatedFrameTime;
 	
 	// =====================  ABSTRACT METHODS ======================
 	protected abstract void Create();
 	protected abstract void Dispose();
-	protected abstract void Update(float deltatime);
+	protected abstract void Update(float dt);
 	protected abstract void Draw();
 	
 	// =====================  SYSTEM METHODS ======================
@@ -88,7 +91,12 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		// initialize subsystems
 		gameGraphics = new Graphics(usedWidth, usedHeight);
 		gameFileIO = new FileIO(this);
+		
 		gameClock = new Clock();
+		gameClock.SetMaxFrameTime(500);
+		gameTimer = gameClock.Get();
+		
+		// OUYA initialization
 		OuyaController.init(this);
 
 		// when all configurations are set we start the rendering thread
@@ -166,8 +174,18 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		// update clock
 		gameClock.Tick();
 		
-		// main game loop methods
-		Update( gameClock.GetDeltaTime() );
+		// game timing
+		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
+		
+		// update game
+		float targetFrameTime = gameClock.GetTargetFrameTime();
+		while(mAccumulatedFrameTime >= targetFrameTime)
+		{
+			// set fixed time
+			Update( targetFrameTime / 1000.0f );
+			mAccumulatedFrameTime -= targetFrameTime;
+		}
+
 		Draw();
 	}
 	
