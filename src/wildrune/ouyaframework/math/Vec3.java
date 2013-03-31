@@ -7,13 +7,29 @@ package wildrune.ouyaframework.math;
  */
 public class Vec3 
 {
+	private float[] elements;
 	public float x, y, z;
 	
+	/**
+	 * Constructor
+	 */
 	public Vec3()
 	{
+		elements = new float[3];
 		this.x = 0.0f;
 		this.y = 0.0f;
 		this.z = 0.0f;
+	}
+	
+	/**
+	 * Converts this vector to a array
+	 */
+	public float[] ToArray()
+	{
+		elements[0] = x;
+		elements[1] = y;
+		elements[2] = z;
+		return elements;
 	}
 	
 	/***

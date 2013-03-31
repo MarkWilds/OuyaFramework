@@ -7,6 +7,7 @@ package wildrune.ouyaframework.math;
  */
 public class Vec2 
 {
+	private float[] elements;
 	public float x, y;
 	
 	/***
@@ -16,11 +17,21 @@ public class Vec2
 	public Vec2(float x, float y) {
 		this.x = x;
 		this.y = y;
+		elements = new float[2];
 	}
 	
 	public Vec2(Vec2 other) {
-		this.x = other.x;
-		this.y = other.y;
+		this(other.x, other.y);
+	}
+	
+	/**
+	 * Converts this vector to a array
+	 */
+	public float[] ToArray()
+	{
+		elements[0] = x;
+		elements[1] = y;
+		return elements;
 	}
 	
 	/***

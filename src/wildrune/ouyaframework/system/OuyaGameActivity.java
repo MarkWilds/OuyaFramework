@@ -8,7 +8,6 @@ import tv.ouya.console.api.OuyaController;
 
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.app.Activity;
@@ -27,10 +26,6 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	// start flags
 	protected boolean isDebugMode;
 	protected boolean isLowResMode;
-	
-	
-	int fpsCounter;
-	float fpsTimer;
 	
 	// ==================== SUBSYSTEMS ==========================
 	protected Graphics 		gameGraphics;
@@ -178,17 +173,6 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		
 		// update clock
 		gameClock.Tick();
-		
-		fpsTimer += gameTimer.GetElapsedMiliseconds();
-		fpsCounter++;
-		
-		if(fpsTimer >= 1000.0f)
-		{
-			Log.d("DEBUG", "FPS: " + fpsCounter);
-			
-			fpsTimer -= 1000.0f;
-			fpsCounter = 0;
-		}
 		
 		// game timing
 		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
