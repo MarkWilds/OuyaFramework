@@ -110,12 +110,12 @@ public class Mat4
 	}
 	
 	/**
-	 * Rotates this matrix with the specified euler angles
+	 * Creates a rotation matrix from euler angles
 	 * @param yaw rotating around y axis
 	 * @param pitch rotating around x axis
 	 * @param roll rotating around z axis
 	 */
-	public void RotateEuler(float yaw, float pitch, float roll)
+	public void CreateRotateEuler(float yaw, float pitch, float roll)
 	{
 		Matrix.setRotateEulerM(elements, 0, yaw, pitch, roll);
 	}
@@ -175,7 +175,7 @@ public class Mat4
 	}
 	
 	/**
-	 * Inverts this matrix and put its results in invet
+	 * Inverts this matrix and put its results in invert
 	 */
 	public void Invert(Mat4 invert)
 	{
@@ -189,7 +189,7 @@ public class Mat4
 	 * @param n near plane of the frustum
 	 * @param f far plane of the frustum
 	 */
-	public void Perspective(float fov, float aspect, float n, float f)
+	public void CreatePerspective(float fov, float aspect, float n, float f)
 	{
 		Matrix.perspectiveM(elements, 0, fov, aspect, n, f);
 	}
@@ -199,7 +199,7 @@ public class Mat4
 	 * @param width x dimension of the screen
 	 * @param height y dimension of the screen
 	 */
-	public void Ortho2D(int width, int height)
+	public void CreateOrtho2D(int width, int height)
 	{
 		Matrix.orthoM(elements, 0, 0, width, 0, height, 0, 1.0f);
 	}
