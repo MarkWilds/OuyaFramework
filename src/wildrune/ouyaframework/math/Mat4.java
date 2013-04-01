@@ -62,19 +62,23 @@ public class Mat4
 	 * @param lhs the matrix to multiply rhs matrix with
  	 * @param rhs the matrix to multiply lhs matrix with
 	 */
-	public static Mat4 Multiply(Mat4 lhs, Mat4 rhs)
+	public static void Multiply(Mat4 result, Mat4 lhs, Mat4 rhs)
 	{
-		Mat4 result = RuneMath.GetMat4();
 		Matrix.multiplyMM(result.elements, 0, lhs.elements, 0, rhs.elements, 0);
-		
-		return result;
+	}
+	
+	public void MultiplyAssign(Mat4 rhs)
+	{
+		Multiply(this, this, rhs);
 	}
 	
 	public Mat4 Multiply(Mat4 rhs)
 	{
-		return Multiply(this, rhs);
+		Mat4 result = RuneMath.GetMat4();
+		Multiply(result, this, rhs);
+		return result;
 	}
-	
+
 	/**
 	 * Orthogonalizes the give matrix
 	 */
