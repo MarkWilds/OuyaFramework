@@ -12,7 +12,7 @@ import java.util.Stack;
 public class Clock 
 {
 	// constants
-	public static final int MAX_TIMERS = 8;
+	public static final int MAX_TIMERS = 4;
 	public static final int MAX_FRAME_TIME = 500;
 	public static final int TARGET_FRAME_TIME = 60;
 	

@@ -17,6 +17,10 @@ public class RuneMath
 	public static final float EPSILONS = 1e-6f;
 	public static final float EPSILONH = 1e-3f;
 	
+	// ############# POOL ######################
+	
+	// ############# POOL END ##################
+	
 	/***
 	 * let's use see if the value is close enough to some other value
 	 * @param value the value we perform the check on

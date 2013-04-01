@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.graphics;
 
+import android.graphics.Rect;
+
 /***
  * Class managing the graphics
  * @author Wildrune
@@ -7,35 +9,24 @@ package wildrune.ouyaframework.graphics;
  */
 public class Graphics 
 {
-	private int mBackBufferWidth;
-	private int mBackBufferHeight;
-	
-	/***
-	 * Getters & setters
-	 */
-	public int GetWidth() {
-		return mBackBufferWidth;
-	}
-	
-	public int GetHeight() {
-		return mBackBufferHeight;
-	}
-	
-	public void SetWidth(int w) {
-		mBackBufferWidth = w;
-	}
-	
-	public void SetHeight(int h) {
-		mBackBufferHeight = h;
-	}
+	public Rect viewportNormal;
+	public Rect viewportSafeArea;
 	
 	/***
 	 * Default constructor
 	 */
 	public Graphics(int width, int height)
 	{
-		// initialize
-		mBackBufferWidth = width;
-		mBackBufferHeight = height;
+		// set normal viewport
+		viewportNormal = new Rect(0, 0, width, height);
+		
+		// calculate safe area
+		int leftSafe = (int)(width * 0.05f);
+		int topSafe = (int)(height * 0.05f);
+		int rightSafe = (int)(width - width * 0.05f);
+		int bottomSafe = (int)(height - height * 0.05f);
+		
+		// set safe area viewport
+		viewportSafeArea = new Rect(leftSafe, topSafe, rightSafe, bottomSafe);
 	}
 }
