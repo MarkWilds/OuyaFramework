@@ -21,6 +21,11 @@ public class Vec3
 		this.z = 0.0f;
 	}
 	
+	public void Zero()
+	{
+		x = y = z = 0f;
+	}
+	
 	/**
 	 * Converts this vector to a array
 	 */
@@ -142,6 +147,11 @@ public class Vec3
 			this.z /= length;
 		}
 		return this;
+	}
+	
+	public static float Length(float x, float y, float z)
+	{
+		return (float)Math.sqrt(x * x + y * y + z * z);
 	}
 	
 	/***

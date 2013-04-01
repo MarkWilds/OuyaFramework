@@ -24,6 +24,11 @@ public class Vec2
 		this(other.x, other.y);
 	}
 	
+	public void Zero()
+	{
+		x = y = 0f;
+	}
+	
 	/**
 	 * Converts this vector to a array
 	 */

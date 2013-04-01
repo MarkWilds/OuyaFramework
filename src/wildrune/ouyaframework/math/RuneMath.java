@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.math;
 
+import wildrune.ouyaframework.util.ObjectPool;
+
 /***
  * Math utility class
  * @author Wildrune
@@ -17,9 +19,47 @@ public class RuneMath
 	public static final float EPSILONS = 1e-6f;
 	public static final float EPSILONH = 1e-3f;
 	
-	// ############# POOL ######################
+	// ############# MATH POOL ######################
+	private static final ObjectPool<Vec2> mVector2Pool = new ObjectPool<Vec2>(Vec2.class);
+	private static final ObjectPool<Vec3> mVector3Pool = new ObjectPool<Vec3>(Vec3.class);
+	private static final ObjectPool<Mat4> mMatrix4Pool = new ObjectPool<Mat4>(Mat4.class);
 	
-	// ############# POOL END ##################
+	// POOL GETTERS
+	public static Vec2 GetVec2()
+	{
+		return mVector2Pool.Get();
+	}
+	
+	public static Vec3 GetVec3()
+	{
+		return mVector3Pool.Get();
+	}
+	
+	public static Mat4 GetMat4()
+	{
+		return mMatrix4Pool.Get();
+	}
+	
+	// POOL RECYCLERS
+	public static void Recycle(Vec2 vec)
+	{
+		vec.Zero();
+		mVector2Pool.Recycle(vec);
+	}
+	
+	public static void Recycle(Vec3 vec)
+	{
+		vec.Zero();
+		mVector3Pool.Recycle(vec);
+	}
+	
+	public static void Recycle(Mat4 mat)
+	{
+		mat.Identity();
+		mMatrix4Pool.Recycle(mat);
+	}
+	
+	// ############# POOL END #######################
 	
 	/***
 	 * let's use see if the value is close enough to some other value

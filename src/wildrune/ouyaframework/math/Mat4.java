@@ -34,6 +34,12 @@ public class Mat4
 		Matrix.setIdentityM(elements, 0);
 	}
 	
+	public void Identity()
+	{
+		// set identity
+		Matrix.setIdentityM(elements, 0);	
+	}
+	
 	/**
 	 * Multiply this matrix by a vector
 	 */
@@ -51,32 +57,42 @@ public class Mat4
 		dest.y = tempV[1];
 		dest.z = tempV[2];
 	}
-	
+
 	/**
-	 * Multiply this matrix by another matrix (dest = this * rhs)
- 	 * @param rhs the matrix to multiply this matrix with
+	 * Multiply this matrix by another matrix (dest = lhs * rhs)
 	 * @param dest the matrix to save the results to
+	 * @param lhs the matrix to multiply rhs matrix with
+ 	 * @param rhs the matrix to multiply lhs matrix with
 	 */
 	public static void Multiply(Mat4 dest, Mat4 lhs, Mat4 rhs)
 	{
-		// dest = this * rhs
 		Matrix.multiplyMM(temp, 0, lhs.elements, 0, rhs.elements, 0);
 		
 		// copy over the array
 		System.arraycopy(temp, 0, dest.elements, 0, 16);
 	}
 	
-	/**
-	 * Multiply this matrix by another matrix
-	 * @param rhs the matrix to multiply this matrix with
-	 */
-	public void Multiply(Mat4 rhs)
+	public static void Orthogonalize(Mat4 dest)
 	{
-		// this = this * rhs
-		Matrix.multiplyMM(temp, 0, elements, 0, rhs.elements, 0);
+		// renormalize
+		float colOne = Vec3.Length(dest.elements[0], dest.elements[1], dest.elements[2]);
+		float colTwo = Vec3.Length(dest.elements[4], dest.elements[5], dest.elements[6]);
+		float colThree = Vec3.Length(dest.elements[8], dest.elements[9], dest.elements[10]);
 		
-		// copy over the array
-		System.arraycopy(temp, 0, elements, 0, 16);
+		// normalize col one
+		dest.elements[0] = dest.elements[0] / colOne;
+		dest.elements[1] = dest.elements[1] / colOne;
+		dest.elements[2] = dest.elements[2] / colOne;
+		
+		// normalize col two
+		dest.elements[4] = dest.elements[4] / colTwo;
+		dest.elements[5] = dest.elements[5] / colTwo;
+		dest.elements[6] = dest.elements[6] / colTwo;
+		
+		// normalize col three
+		dest.elements[8] = dest.elements[8] / colThree;
+		dest.elements[9] = dest.elements[9] / colThree;
+		dest.elements[10] = dest.elements[10] / colThree;
 	}
 
 	/***
@@ -127,6 +143,10 @@ public class Mat4
 	 */
 	public static void CreateRotationAxis(Mat4 mat, float angle, float x, float y, float z)
 	{
+		// clear the matrix
+		Matrix.setIdentityM(mat.elements, 0);
+		
+		// create rotation matrix
 		float cos = (float) Math.cos( angle * RuneMath.TORAD );
 		float sin = (float) Math.sin( angle * RuneMath.TORAD );
 
@@ -154,9 +174,37 @@ public class Mat4
 	 * @param pitch rotating around x axis
 	 * @param roll rotating around z axis
 	 */
-	public static void CreateRotationEuler(Mat4 mat, float yaw, float pitch, float roll)
+	public static void CreateRotationEuler(Mat4 mat, float pitch, float yaw, float roll)
 	{
-		Matrix.setRotateEulerM(mat.elements, 0, yaw, pitch, roll);
+		// clear the matrix
+		Matrix.setIdentityM(mat.elements, 0);
+		
+		// perform yaw
+		if(Math.abs(yaw) > 0f)
+		{
+			Mat4 yawM = RuneMath.GetMat4();
+			Mat4.CreateRotationAxis(yawM, yaw, 0, 1f, 0);
+			Mat4.Multiply(mat, mat, yawM);
+			RuneMath.Recycle(yawM);
+		}
+		
+		// perform pitch
+		if(Math.abs(pitch) > 0f)
+		{
+			Mat4 pitchM = RuneMath.GetMat4();
+			Mat4.CreateRotationAxis(pitchM, pitch, 1f, 0, 0);
+			Mat4.Multiply(mat, mat, pitchM);
+			RuneMath.Recycle(pitchM);
+		}
+		
+		// perform roll
+		if(Math.abs(roll) > 0f)
+		{
+			Mat4 rollM = RuneMath.GetMat4();
+			Mat4.CreateRotationAxis(rollM, roll, 0, 0, 1f);
+			Mat4.Multiply(mat, mat, rollM);
+			RuneMath.Recycle(rollM);
+		}
 	}
 	
 	/**
@@ -210,7 +258,10 @@ public class Mat4
 	 */
 	public void Transpose(Mat4 dest)
 	{
-		Matrix.transposeM(dest.elements, 0, elements, 0);
+		Matrix.transposeM(temp, 0, elements, 0);
+		
+		// copy over the array
+		System.arraycopy(temp, 0, dest.elements, 0, 16);
 	}
 	
 	/**
@@ -218,7 +269,10 @@ public class Mat4
 	 */
 	public void Invert(Mat4 dest)
 	{
-		Matrix.invertM(dest.elements, 0, elements, 0);
+		Matrix.invertM(temp, 0, elements, 0);
+		
+		// copy over the array
+		System.arraycopy(temp, 0, dest.elements, 0, 16);
 	}
 	
 	/**
