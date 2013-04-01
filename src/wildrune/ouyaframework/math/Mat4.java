@@ -17,12 +17,6 @@ public class Mat4
 	public final float[] elements;
 	
 	/**
-	 * Temporarly storage for multiplying matrices
-	 */
-	private static final float[] temp = new float[16];
-	private static final float[] tempV = new float[3];
-	
-	/**
 	 * Constructor
 	 */
 	public Mat4()
@@ -43,19 +37,23 @@ public class Mat4
 	/**
 	 * Multiply this matrix by a vector
 	 */
-	public static void Multiply(Vec3 dest, Mat4 lhs, Vec3 rhs)
+	public static Vec3 Multiply(Mat4 lhs, Vec3 rhs)
 	{
+		Vec3 dest = RuneMath.GetVec3();
+		
 		// m11 * x + m21 * y + m31 * z + m41
 		// m12 * x + m22 * y + m32 * z + m42
 		// m13 * x + m23 * y + m33 * z + m43
-		tempV[0] = lhs.elements[0] * rhs.x + lhs.elements[4] * rhs.y + lhs.elements[8] * rhs.z + lhs.elements[12];
-		tempV[1] = lhs.elements[1] * rhs.x + lhs.elements[5] * rhs.y + lhs.elements[9] * rhs.z + lhs.elements[13];
-		tempV[2] = lhs.elements[2] * rhs.x + lhs.elements[6] * rhs.y + lhs.elements[10] * rhs.z + lhs.elements[14];
+		dest.x = lhs.elements[0] * rhs.x + lhs.elements[4] * rhs.y + lhs.elements[8] * rhs.z + lhs.elements[12];
+		dest.y = lhs.elements[1] * rhs.x + lhs.elements[5] * rhs.y + lhs.elements[9] * rhs.z + lhs.elements[13];
+		dest.z = lhs.elements[2] * rhs.x + lhs.elements[6] * rhs.y + lhs.elements[10] * rhs.z + lhs.elements[14];
 		
-		// copy over the array
-		dest.x = tempV[0];
-		dest.y = tempV[1];
-		dest.z = tempV[2];
+		return dest;
+	}
+	
+	public Vec3 Multiply(Vec3 rhs)
+	{
+		return Multiply(this, rhs);
 	}
 
 	/**
@@ -64,14 +62,22 @@ public class Mat4
 	 * @param lhs the matrix to multiply rhs matrix with
  	 * @param rhs the matrix to multiply lhs matrix with
 	 */
-	public static void Multiply(Mat4 dest, Mat4 lhs, Mat4 rhs)
+	public static Mat4 Multiply(Mat4 lhs, Mat4 rhs)
 	{
-		Matrix.multiplyMM(temp, 0, lhs.elements, 0, rhs.elements, 0);
+		Mat4 result = RuneMath.GetMat4();
+		Matrix.multiplyMM(result.elements, 0, lhs.elements, 0, rhs.elements, 0);
 		
-		// copy over the array
-		System.arraycopy(temp, 0, dest.elements, 0, 16);
+		return result;
 	}
 	
+	public Mat4 Multiply(Mat4 rhs)
+	{
+		return Multiply(this, rhs);
+	}
+	
+	/**
+	 * Orthogonalizes the give matrix
+	 */
 	public static void Orthogonalize(Mat4 dest)
 	{
 		// renormalize
@@ -98,74 +104,78 @@ public class Mat4
 	/***
 	 * Creates a translation matrix from the given matrix
 	 */
-	public static void CreateTranslation(Mat4 mat, float x, float y, float z)
+	public static Mat4 CreateTranslation(float x, float y, float z)
 	{
-		// clear the matrix
-		Matrix.setIdentityM(mat.elements,0);
+		Mat4 result = RuneMath.GetMat4();
 		
 		// set translation part
-		mat.elements[12] = x;
-		mat.elements[13] = y;
-		mat.elements[14] = z;
+		result.elements[12] = x;
+		result.elements[13] = y;
+		result.elements[14] = z;
+		
+		return result;
 	}
 
-	public static void CreateTranslation(Mat4 mat, Vec3 translation)
+	public static Mat4 CreateTranslation(Vec3 translation)
 	{
-		CreateTranslation(mat, translation.x, translation.y, translation.z);
+		return CreateTranslation(translation.x, translation.y, translation.z);
 	}
 	
 	/**
 	 * Create a scale matrix
 	 */
-	public static void CreateScale(Mat4 mat, float x, float y, float z)
+	public static Mat4 CreateScale(float x, float y, float z)
 	{
-		// clear the matrix
-		Matrix.setIdentityM(mat.elements,0);
+		Mat4 result = RuneMath.GetMat4();
 		
 		// set scale part
-		mat.elements[0] = x;
-		mat.elements[5] = y;
-		mat.elements[10] = z;
+		result.elements[0] = x;
+		result.elements[5] = y;
+		result.elements[10] = z;
+		
+		return result;
 	}
 	
-	public static void CreateScale(Mat4 mat, Vec3 scale)
+	public static Mat4 CreateScale(Vec3 scale)
 	{
-		CreateScale(mat, scale.x, scale.y, scale.z);
+		return CreateScale(scale.x, scale.y, scale.z);
 	}
 	
-	public static void CreateScaleUniform(Mat4 mat, float s)
+	public static Mat4 CreateScaleUniform(float s)
 	{
-		CreateScale(mat, s, s, s);
+		return CreateScale(s, s, s);
 	}
 	
 	/**
 	 * Create a rotation matrix around the axis
 	 */
-	public static void CreateRotationAxis(Mat4 mat, float angle, float x, float y, float z)
+	public static Mat4 CreateRotationAxis(float angle, float x, float y, float z)
 	{
 		// clear the matrix
-		Matrix.setIdentityM(mat.elements, 0);
+		Mat4 result = RuneMath.GetMat4();
 		
 		// create rotation matrix
 		float cos = (float) Math.cos( angle * RuneMath.TORAD );
 		float sin = (float) Math.sin( angle * RuneMath.TORAD );
 
-		mat.elements[0] = x * x * (1.0f - cos) + cos;
-		mat.elements[1] = x * y * (1.0f - cos) + z * sin;
-		mat.elements[2] = x * z * (1.0f - cos) - y * sin;
+		result.elements[0] = x * x * (1.0f - cos) + cos;
+		result.elements[1] = x * y * (1.0f - cos) + z * sin;
+		result.elements[2] = x * z * (1.0f - cos) - y * sin;
 
-		mat.elements[4] = y * x * (1.0f - cos) - z * sin;
-		mat.elements[5] = y * y * (1.0f - cos) + cos;
-		mat.elements[6] = y * z * (1.0f - cos) + x * sin;
+		result.elements[4] = y * x * (1.0f - cos) - z * sin;
+		result.elements[5] = y * y * (1.0f - cos) + cos;
+		result.elements[6] = y * z * (1.0f - cos) + x * sin;
 
-		mat.elements[8] = z * x * (1.0f - cos) + y * sin;
-		mat.elements[9] = z * y * (1.0f - cos) - x * sin;
-		mat.elements[10] = z * z * (1.0f - cos) + cos;
+		result.elements[8] = z * x * (1.0f - cos) + y * sin;
+		result.elements[9] = z * y * (1.0f - cos) - x * sin;
+		result.elements[10] = z * z * (1.0f - cos) + cos;
+		
+		return result;
 	}
 	
-	public static void CreateRotationAxis(Mat4 mat, float angle, Vec3 axis)
+	public static Mat4 CreateRotationAxis(float angle, Vec3 axis)
 	{
-		CreateRotationAxis(mat, angle, axis.x, axis.y, axis.z);
+		return CreateRotationAxis(angle, axis.x, axis.y, axis.z);
 	}
 	
 	/**
@@ -174,37 +184,36 @@ public class Mat4
 	 * @param pitch rotating around x axis
 	 * @param roll rotating around z axis
 	 */
-	public static void CreateRotationEuler(Mat4 mat, float pitch, float yaw, float roll)
+	public static Mat4 CreateRotationEuler(float pitch, float yaw, float roll)
 	{
 		// clear the matrix
-		Matrix.setIdentityM(mat.elements, 0);
+		Mat4 result = RuneMath.GetMat4();
 		
 		// perform yaw
 		if(Math.abs(yaw) > 0f)
 		{
-			Mat4 yawM = RuneMath.GetMat4();
-			Mat4.CreateRotationAxis(yawM, yaw, 0, 1f, 0);
-			Mat4.Multiply(mat, mat, yawM);
+			Mat4 yawM = Mat4.CreateRotationAxis( yaw, 0, 1f, 0);
+			result = result.Multiply(yawM);
 			RuneMath.Recycle(yawM);
 		}
 		
 		// perform pitch
 		if(Math.abs(pitch) > 0f)
 		{
-			Mat4 pitchM = RuneMath.GetMat4();
-			Mat4.CreateRotationAxis(pitchM, pitch, 1f, 0, 0);
-			Mat4.Multiply(mat, mat, pitchM);
+			Mat4 pitchM = Mat4.CreateRotationAxis(pitch, 1f, 0, 0);
+			result = result.Multiply(pitchM);
 			RuneMath.Recycle(pitchM);
 		}
 		
 		// perform roll
 		if(Math.abs(roll) > 0f)
 		{
-			Mat4 rollM = RuneMath.GetMat4();
-			Mat4.CreateRotationAxis(rollM, roll, 0, 0, 1f);
-			Mat4.Multiply(mat, mat, rollM);
+			Mat4 rollM = Mat4.CreateRotationAxis(roll, 0, 0, 1f);
+			result = result.Multiply(rollM);
 			RuneMath.Recycle(rollM);
 		}
+		
+		return result;
 	}
 	
 	/**
@@ -256,23 +265,21 @@ public class Mat4
 	/**
 	 * Transposes this matrix and put the results in transpose
 	 */
-	public void Transpose(Mat4 dest)
+	public Mat4 Transpose()
 	{
-		Matrix.transposeM(temp, 0, elements, 0);
-		
-		// copy over the array
-		System.arraycopy(temp, 0, dest.elements, 0, 16);
+		Mat4 result = RuneMath.GetMat4();
+		Matrix.transposeM(result.elements, 0, elements, 0);
+		return result;
 	}
 	
 	/**
 	 * Inverts this matrix and put its results in invert
 	 */
-	public void Invert(Mat4 dest)
+	public Mat4 Invert()
 	{
-		Matrix.invertM(temp, 0, elements, 0);
-		
-		// copy over the array
-		System.arraycopy(temp, 0, dest.elements, 0, 16);
+		Mat4 result = RuneMath.GetMat4();
+		Matrix.invertM(result.elements, 0, elements, 0);
+		return result;
 	}
 	
 	/**
@@ -282,9 +289,11 @@ public class Mat4
 	 * @param n near plane of the frustum
 	 * @param f far plane of the frustum
 	 */
-	public static void CreatePerspectiveR(Mat4 mat, float fov, float aspect, float n, float f)
+	public static Mat4 CreatePerspectiveR(float fov, float aspect, float n, float f)
 	{
-		Matrix.perspectiveM(mat.elements, 0, fov, aspect, n, f);
+		Mat4 result = RuneMath.GetMat4();
+		Matrix.perspectiveM(result.elements, 0, fov, aspect, n, f);
+		return result;
 	}
 	
 	/**
@@ -294,16 +303,18 @@ public class Mat4
 	 * @param n near plane of the frustum
 	 * @param f far plane of the frustum
 	 */
-	public static void CreatePerspectiveL(Mat4 mat, float fov, float aspect, float n, float f)
+	public static Mat4 CreatePerspectiveL(float fov, float aspect, float n, float f)
 	{	
 		// create left handed perspective matrix
+		Mat4 result = RuneMath.GetMat4();
 		float tan = 1.0f / (float)Math.tan( fov / 2.0f  * RuneMath.TORAD );
 		
-		mat.elements[0] = tan; // m11
-		mat.elements[5] = tan * aspect; // m22
-		mat.elements[10] = (f + n) 	/ (f - n); // m33
-		mat.elements[14] = (-2 * n * f) / (f - n); // m43
-		mat.elements[11] = 1.0f; // m34
+		result.elements[0] = tan; // m11
+		result.elements[5] = tan * aspect; // m22
+		result.elements[10] = (f + n) 	/ (f - n); // m33
+		result.elements[14] = (-2 * n * f) / (f - n); // m43
+		result.elements[11] = 1.0f; // m34
+		return result;
 	}
 	
 	/**
@@ -311,8 +322,10 @@ public class Mat4
 	 * @param width x dimension of the screen
 	 * @param height y dimension of the screen
 	 */
-	public static void CreateOrtho2D(Mat4 mat, int width, int height)
+	public static Mat4 CreateOrtho2D(int width, int height)
 	{
-		Matrix.orthoM(mat.elements, 0, 0, width, 0, height, 0, 1.0f);
+		Mat4 result = RuneMath.GetMat4();
+		Matrix.orthoM(result.elements, 0, 0, width, 0, height, 0, 1.0f);
+		return result;
 	}
 }
