@@ -24,6 +24,13 @@ public class RuneMath
 	private static final ObjectPool<Vec3> mVector3Pool = new ObjectPool<Vec3>(Vec3.class);
 	private static final ObjectPool<Mat4> mMatrix4Pool = new ObjectPool<Mat4>(Mat4.class);
 	
+	static
+	{
+		Vec2.mParentPool = mVector2Pool;
+		Vec3.mParentPool = mVector3Pool;
+		Mat4.mParentPool = mMatrix4Pool;
+	}
+	
 	// POOL GETTERS
 	public static Vec2 GetVec2()
 	{
@@ -125,5 +132,56 @@ public class RuneMath
 			i <<= 1;
 
 		return i;
+	}
+	
+	/***
+	 * Get the previous power of two number
+	 * @param x the number we want to find the previous power of 2 of
+	 * @return the previous power of two number
+	 */
+	public static int PrevPower2(int x)
+	{
+		int m = x;
+		int i = 0;
+		
+	 	for(; m > 1; i++)
+	 		m = m >>> 1;
+
+		// Round to nearest power
+		if( (x & 1 << i-1) > 0) i++;
+		return 1 << i;
+	}
+	
+	/**
+	 * Gets the closes power of 2 number
+	 * @param x
+	 * @return
+	 */
+	public static int ClosestPower2(int x)
+	{
+		// get power of two
+		int npot = RuneMath.NextPower2(x);
+		int ppot = RuneMath.PrevPower2(x);
+		
+		// check which power of two to choose
+		return RuneMath.IsClosestTo(npot, ppot, x);
+	}
+	
+	/**
+	 * Returns the value that is the closest to the given value
+	 * @param a
+	 * @param b
+	 * @param to
+	 * @return
+	 */
+	public static int IsClosestTo(int a, int b, int to)
+	{
+		int diffA = Math.abs(to - a);
+		int diffB = Math.abs(to - b);
+		
+		if( diffA < diffB )
+			return a;
+		else
+			return b;
 	}
 }

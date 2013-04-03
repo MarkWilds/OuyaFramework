@@ -1,5 +1,6 @@
 package wildrune.ouyaframework.math;
 
+import wildrune.ouyaframework.util.ObjectPool;
 import android.opengl.Matrix;
 
 /***
@@ -15,6 +16,7 @@ public class Mat4
 	 * The elements of this 4x4 matrix
 	 */
 	public final float[] elements;
+	public static ObjectPool<Mat4> mParentPool;
 	
 	/**
 	 * Constructor
@@ -25,13 +27,19 @@ public class Mat4
 		elements = new float[16];
 		
 		// set identity
-		Matrix.setIdentityM(elements, 0);
+		Matrix.setIdentityM(elements, 0);	
 	}
 	
 	public void Identity()
 	{
 		// set identity
 		Matrix.setIdentityM(elements, 0);	
+	}
+	
+	public void Recycle()
+	{
+		if(mParentPool != null)
+			mParentPool.Recycle(this);
 	}
 	
 	/**
@@ -70,6 +78,7 @@ public class Mat4
 	public void MultiplyAssign(Mat4 rhs)
 	{
 		Multiply(this, this, rhs);
+		Mat4.Orthogonalize(this);
 	}
 	
 	public Mat4 Multiply(Mat4 rhs)

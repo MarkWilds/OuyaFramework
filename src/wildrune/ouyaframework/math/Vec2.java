@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.math;
 
+import wildrune.ouyaframework.util.ObjectPool;
+
 /***
  * Vector 2D for game math
  * @author Wildrune
@@ -8,6 +10,7 @@ package wildrune.ouyaframework.math;
 public class Vec2 
 {
 	private float[] elements;
+	public static ObjectPool<Vec2> mParentPool;
 	public float x, y;
 	
 	/***
@@ -22,6 +25,12 @@ public class Vec2
 	
 	public Vec2(Vec2 other) {
 		this(other.x, other.y);
+	}
+	
+	public void Recycle()
+	{
+		if(mParentPool != null)
+			mParentPool.Recycle(this);
 	}
 	
 	public void Zero()

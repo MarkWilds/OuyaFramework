@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.graphics;
+package wildrune.ouyaframework.graphics.basic;
 
 import android.opengl.GLES20;
 import android.util.Log;
