@@ -12,7 +12,7 @@ import android.graphics.BitmapFactory;
  * @author Wildrune
  *
  */
-public class TextureUtil 
+public class TextureUtils 
 {
 	/**
 	 * Loads a bitmap from a stream
@@ -20,7 +20,7 @@ public class TextureUtil
 	 * @param powerOfTwo specify if we want to convert non power of two to power of two
 	 * @return returns the loaded bitmap
 	 */
-	public static Bitmap LoadBitmapFromAssets(InputStream stream, boolean powerOfTwo)
+	public static Bitmap LoadBitmapFromStream(InputStream stream, boolean powerOfTwo)
 	{
 		// create bitmap options
 		final BitmapFactory.Options options = new BitmapFactory.Options();
@@ -31,15 +31,14 @@ public class TextureUtil
 		int bHeight = sourceBitmap.getHeight();
 		
 		// check if we want to convert the texture to power of two
-		if( powerOfTwo && 
-				!RuneMath.IsPower2(bWidth) || !RuneMath.IsPower2(bHeight) )
+		if( powerOfTwo && ( !RuneMath.IsPower2(bWidth) || !RuneMath.IsPower2(bHeight) ) )
 		{		
 			// check which power of two to choose
-			int potW = RuneMath.ClosestPower2(bWidth);
-			int potH = RuneMath.ClosestPower2(bHeight);
+			int potW = RuneMath.ClosestPowerOf2(bWidth);
+			int potH = RuneMath.ClosestPowerOf2(bHeight);
 			
 			// create new bitmap
-			Bitmap scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, potW, potH, true);
+			Bitmap scaledBitmap = Bitmap.createScaledBitmap(sourceBitmap, potW, potH, false);
 			sourceBitmap.recycle();
 			return scaledBitmap;
 		}

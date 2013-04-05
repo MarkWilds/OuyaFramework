@@ -1,9 +1,10 @@
 package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
+import android.opengl.GLES20;
 import android.util.Log;
 
-/***
+/**
  * Takes care of handling the OpenGL ES 2.0 shaders
  * @author Wildrune
  *
@@ -12,93 +13,139 @@ public class ShaderProgram
 {
 	private static final String LOG_TAG = "ShaderProgram";
 	
-	/***
+	/**
 	 * Data members
 	 */
-	private int		mProgramID;
+	private int		mProgramHandle;
 	private boolean mLinked;
-	private boolean	mResolved;
 	
 	private Shader mVertex;
 	private Shader mFragment;
 	
-	/***
+	/**
 	 * Getters
 	 */
 	public boolean IsLinked() { return mLinked; }
-	public int GetID() { return mProgramID; }
+	public int GetHandle() { return mProgramHandle; }
 	
 	
-	/***
+	/**
 	 * Default constructor
 	 */
 	public ShaderProgram()
 	{
+		this.mProgramHandle = 0;
 		this.mLinked = false;
-		
-		// create program
-		this.mProgramID = glCreateProgram();
-		
-		// return based on succession
-		this.mResolved = (this.mProgramID > 0) ? true : false;
 	}
 	
 	/**
-	 * Create a shaderprogram directly from shaders
-	 */	
-	public boolean Build(String vertex, String fragment)
+	 * Create this shaderprogram
+	 * @return true if succeeded, false if not
+	 */
+	public boolean Create()
 	{
-		mVertex = new Shader( vertex, Shader.TYPE.VERTEX );
-		mFragment = new Shader( fragment, Shader.TYPE.FRAGMENT );
+		// create program
+		this.mProgramHandle = glCreateProgram();
 		
-		// compile shaders and check if we succeeded
-		if(!mVertex.Compile() || !mFragment.Compile())
+		if(this.mProgramHandle > 0)
+			return true;
+		
+		return false;
+	}
+	
+	
+	/**
+	 * Dispose of the shader program
+	 */
+	public void Dispose()
+	{
+		if(this.mProgramHandle > 0)
+			glDeleteProgram(mProgramHandle);
+		
+		// dispose of the shaders
+		if(mVertex != null)
+			mVertex.Dispose();
+		
+		if(mFragment != null)
+			mFragment.Dispose();
+	}
+	
+	/**
+	 * Attach a shader to the program
+	 * Needs a vertex and fragment shader to function correctly
+	 * @param shader The shader to attach to this program
+	 */
+	private void AttachShader(Shader shader)
+	{
+		// attach the shader
+		glAttachShader(mProgramHandle, shader.GetHandle());
+	}
+	
+	/**
+	 * Links the attached shader together, creating directly from the shaders inserted
+	 * @return true on succes, false on failure
+	 */
+	public boolean LinkShaders(String vertex, String fragment)
+	{
+		Shader svertex = new Shader( vertex, GLES20.GL_VERTEX_SHADER );
+		Shader sfragment = new Shader( fragment, GLES20.GL_FRAGMENT_SHADER );
+		
+		// create shaders
+		svertex.Create();
+		sfragment.Create();
+		
+		// error check
+		if( vertex == null || fragment == null)
 			return false;
 		
-		// attach shaders
-		AttachShader(mVertex);
-		AttachShader(mFragment);
+		// compile shaders and check if we succeeded
+		if(!svertex.Compile() || !sfragment.Compile())
+			return false;
 		
 		// link shaders and check if we succeeded
-		if(!LinkShaders())
+		if(!LinkShaders(svertex, sfragment))
 			return false;
 		
 		return true;
 	}
 	
-	/***
-	 * Attach a shader to the program
-	 * Needs a vertex and fragment shader to function correctly
-	 * @param shader The shader to attach to this program
-	 */
-	public void AttachShader(Shader shader)
-	{
-		// attach the shader
-		glAttachShader(mProgramID, shader.GetID());
-	}
-	
-	/***
+	/**
 	 * Links the attached shader together
 	 * @return true on succes, false on failure
 	 */
-	public boolean LinkShaders()
+	public boolean LinkShaders(Shader vertex, Shader fragment)
 	{
+		// error check
+		if( vertex == null || fragment == null)
+			return false;
+		
+		if( !vertex.IsCompiled() || !fragment.IsCompiled())
+			return false;
+		
 		// local vars
 		int[] linked = new int[1];
 		linked[0] = 0;
 		
+		// set shader
+		mVertex = vertex;
+		mFragment = fragment;
+
+		// attach shaders
+		AttachShader(mVertex);
+		AttachShader(mFragment);
+		
 		// link the program
-		glLinkProgram(mProgramID);
+		glLinkProgram(mProgramHandle);
 		
 		// check for errors
-		glGetProgramiv(mProgramID, GL_LINK_STATUS, linked, 0);
-		mLinked = (linked[0] > 0) ? true : false;
-		if( !(mLinked && mResolved) )
+		glGetProgramiv(mProgramHandle, GL_LINK_STATUS, linked, 0);
+		mLinked = (linked[0] > 0);
+		if( !(mLinked && this.mProgramHandle > 0) )
 		{
-			if(mResolved)
-				Log.d(LOG_TAG, "Linking failed:\n" + glGetProgramInfoLog(mProgramID));
+			if(this.mProgramHandle > 0)
+				Log.e(LOG_TAG, "Linking failed:\n" + glGetProgramInfoLog(mProgramHandle));
 			else
-				Log.d(LOG_TAG, "You should first resolve the program before linking!");
+				Log.e(LOG_TAG, "You should first create the program before linking!");
 			
 			return false;
 		}
@@ -106,26 +153,22 @@ public class ShaderProgram
 		return true;
 	}
 	
-	/***
+	/**
 	 * Sets this shader program as current
 	 */
 	public void Bind()
 	{
-		if(mResolved)
-			glUseProgram(mProgramID);
+		if(this.mProgramHandle > 0)
+			glUseProgram(mProgramHandle);
 	}
 	
-	/***
-	 * Dispose of the shader program
+	/**
+	 * Unbinds this shader
 	 */
-	public void Dispose()
+	public void Unbind()
 	{
-		if(mResolved)
-			glDeleteProgram(mProgramID);
-		
-		// dispose of the shader
-		mVertex.Dispose();
-		mFragment.Dispose();
+		if(this.mProgramHandle > 0)
+			glUseProgram(0);
 	}
 	
 	/**
@@ -135,7 +178,7 @@ public class ShaderProgram
 	 */
 	public int GetAttribLocation(String attribName)
 	{
-		return glGetAttribLocation( this.mProgramID , attribName);
+		return glGetAttribLocation( this.mProgramHandle , attribName);
 	}
 	
 	/**
@@ -145,7 +188,7 @@ public class ShaderProgram
 	 */
 	public int GetUniformLocation(String uniformName)
 	{
-		return glGetUniformLocation( this.mProgramID, uniformName);
+		return glGetUniformLocation( this.mProgramHandle, uniformName);
 	}
 	
 	/**
@@ -166,6 +209,26 @@ public class ShaderProgram
 	public void SetUniform(int location, float data)
 	{
 		glUniform1f(location, data);
+	}
+	
+	/**
+	 * Set 2 floats
+	 * @param location
+	 * @param x, y floats
+	 */
+	public void SetUniform(int location, float x, float y)
+	{
+		glUniform2f(location, x, y);
+	}
+	
+	/**
+	 * Set 3 floats
+	 * @param location
+	 * @param x, y, z floats
+	 */
+	public void SetUniform(int location, float x, float y, float z)
+	{
+		glUniform3f(location, x, y, z);
 	}
 	
 	/**

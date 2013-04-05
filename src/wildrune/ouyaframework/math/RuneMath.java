@@ -154,10 +154,10 @@ public class RuneMath
 	
 	/**
 	 * Gets the closes power of 2 number
-	 * @param x
-	 * @return
+	 * @param x the number we want to find the closest power of to from
+	 * @return the closest power of 2
 	 */
-	public static int ClosestPower2(int x)
+	public static int ClosestPowerOf2(int x)
 	{
 		// get power of two
 		int npot = RuneMath.NextPower2(x);
@@ -169,19 +169,16 @@ public class RuneMath
 	
 	/**
 	 * Returns the value that is the closest to the given value
-	 * @param a
-	 * @param b
-	 * @param to
-	 * @return
+	 * @param a first value to compare
+	 * @param b second value to compare
+	 * @param to value to check with
+	 * @return the closes value of a or b
 	 */
 	public static int IsClosestTo(int a, int b, int to)
 	{
 		int diffA = Math.abs(to - a);
 		int diffB = Math.abs(to - b);
 		
-		if( diffA < diffB )
-			return a;
-		else
-			return b;
+		return ( diffA < diffB ) ? a : b;
 	}
 }

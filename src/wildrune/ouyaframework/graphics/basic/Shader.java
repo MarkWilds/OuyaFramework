@@ -3,65 +3,76 @@ package wildrune.ouyaframework.graphics.basic;
 import android.opengl.GLES20;
 import android.util.Log;
 
-/***
+/**
  * OpenGL ES 2.0 shader
  * @author Wildrune
- * @version 0.1
+ * @version 0.2
  *
  */
 public class Shader 
 {
+	private static final String LOG_TAG = "Shader";
+	
 	/***
 	 * Data members
 	 */
 	private String 		mShaderSource;
 	private int 		mShaderType;
-	private int			mShaderID;
-	private boolean		mResolved;
+	private int			mShaderHandle;
 	private boolean		mCompiled;
 	
-	private static final String TAG = "Shader";
-	
-	/***
+	/**
 	 * Getters
 	 */
 	public String GetSource() { return mShaderSource; }
 	public int GetType() { return mShaderType; }
-	public int GetID() { return mShaderID; }
-	public boolean IsResolved() { return mResolved; }
+	public int GetHandle() { return mShaderHandle; }
 	public boolean IsCompiled() { return mCompiled; }
-	
-	/***
-	 * Shader types supported by OpenGL ES 2.0
-	 */
-	public enum TYPE
-	{
-		VERTEX,
-		FRAGMENT;
-	}
 		
-	/***
+	/**
 	 * Constructor
 	 */
-	public Shader(String source, Shader.TYPE type)
+	public Shader(String source, int type)
 	{
 		this.mShaderSource = source;
-		this.mShaderType = TranslateType(type);
-		this.mShaderID = -1;
+		this.mShaderType = type;
+		this.mShaderHandle = 0;
 		this.mCompiled = false;
-		
-		// Get a shader handle from openGL
-		this.mShaderID = GLES20.glCreateShader( this.mShaderType );
-		
-		// return based on succession
-		this.mResolved = (this.mShaderID > 0) ? true : false;
-		
-		// set the shader source
-		if(this.mResolved)
-			GLES20.glShaderSource(this.mShaderID, this.mShaderSource);
 	}
 	
-	/***
+	/**
+	 * Create this shader object
+	 * @return true if succeeded, false if not
+	 */
+	public boolean Create()
+	{
+		// Get a shader handle from openGL
+		this.mShaderHandle = GLES20.glCreateShader( this.mShaderType );
+		
+		// set the shader source
+		if(this.mShaderHandle > 0)
+		{
+			GLES20.glShaderSource(this.mShaderHandle, this.mShaderSource);
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Dispose the shader
+	 */
+	public void Dispose()
+	{
+		if(this.mShaderHandle > 0)
+		{
+			GLES20.glDeleteShader(mShaderHandle);
+			mShaderHandle = 0;
+			mCompiled = false;
+		}
+	}
+	
+	/**
 	 * Compiles the shader
 	 * @return true on succes, false on failure
 	 */
@@ -72,51 +83,21 @@ public class Shader
 		compiled[0] = 0;
 		
 		// compile the shader
-		GLES20.glCompileShader(mShaderID);
+		GLES20.glCompileShader(mShaderHandle);
 		
 		// check for errors
-		GLES20.glGetShaderiv(mShaderID, GLES20.GL_COMPILE_STATUS, compiled, 0);
-		mCompiled = (compiled[0] > 0) ? true : false;
-		if( !(mCompiled && mResolved) )
+		GLES20.glGetShaderiv(mShaderHandle, GLES20.GL_COMPILE_STATUS, compiled, 0);
+		mCompiled = (compiled[0] > 0);
+		if( !(mCompiled && this.mShaderHandle > 0) )
 		{
-			if(mResolved)
-				Log.d(TAG, "Compilation:\n" + GLES20.glGetShaderInfoLog(mShaderID) );
+			if(this.mShaderHandle > 0)
+				Log.e(LOG_TAG, "Compilation:\n" + GLES20.glGetShaderInfoLog(mShaderHandle) );
 			else
-				Log.d(TAG, "You should first resolve the shader before compiling");
+				Log.e(LOG_TAG, "The shader is not created yet!");
 			
 			return false;
 		}
 		
 		return true;
-	}
-	
-	/***
-	 * Dispose the shader
-	 */
-	public void Dispose()
-	{
-		GLES20.glDeleteShader(mShaderID);
-		mShaderID = -1;
-		mResolved = false;
-		mCompiled = false;
-	}
-	
-	/***
-	 * Helper method transfer shader enum to openGL enum
-	 * @param type The shader type
-	 * @return the openGL shader type
-	 */
-	private int TranslateType(TYPE type)
-	{
-		// check which type it is
-		switch(type)
-		{
-		case VERTEX:
-			return GLES20.GL_VERTEX_SHADER;
-		case FRAGMENT:
-			return GLES20.GL_FRAGMENT_SHADER;
-		default:
-			return -1;
-		}
 	}
 }

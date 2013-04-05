@@ -30,7 +30,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	// ==================== SUBSYSTEMS ==========================
 	protected Graphics 		Graphics;
 	protected FileIO 		FileIO;
-	private Clock			Clock;
+	private Clock			gameClock;
 	
 	// ===================== GAME TIMER ==========================
 	protected Clock.Timer 	gameTimer;
@@ -92,9 +92,9 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		Graphics = new Graphics(usedWidth, usedHeight);
 		FileIO = new FileIO(this);
 		
-		Clock = new Clock();
-		Clock.SetMaxFrameTime(500);
-		gameTimer = Clock.Get();
+		gameClock = new Clock();
+		gameClock.SetMaxFrameTime(500);
+		gameTimer = gameClock.Get();
 		
 		// OUYA initialization
 		OuyaController.init(this);
@@ -139,7 +139,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		
 		// start our clock
 		// IS THIS THE RIGHT PLACE??
-		Clock.Start();
+		gameClock.Start();
 	}
 
 	/***
@@ -172,13 +172,13 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		}
 		
 		// update clock
-		Clock.Tick();
+		gameClock.Tick();
 		
 		// game timing
 		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
 		
 		// update game
-		float targetFrameTime = Clock.GetTargetFrameTime();
+		float targetFrameTime = gameClock.GetTargetFrameTime();
 		while(mAccumulatedFrameTime >= targetFrameTime)
 		{
 			// set fixed time

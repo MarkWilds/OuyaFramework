@@ -108,6 +108,8 @@ public class Clock
 	{
 		if(mTimers.contains(timer))
 			mTimers.remove(timer);
+		
+		mTimerStack.add(timer);
 	}
 	
 	/***

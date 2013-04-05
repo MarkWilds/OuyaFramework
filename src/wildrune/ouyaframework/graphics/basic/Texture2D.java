@@ -1,6 +1,7 @@
 package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
+import wildrune.ouyaframework.util.interfaces.IDisposable;
 import android.graphics.Bitmap;
 import android.opengl.GLUtils;
 import android.util.Log;
@@ -11,22 +12,24 @@ import android.util.Log;
  * @author Wildrune
  *
  */
-public class Texture2D 
+public class Texture2D implements IDisposable
 {	
 	private final static String LOG_TAG = "Texture2D";
+	
+	// this is used for retreiving handles without having to allocate new int's everytime
+	private final static int[] temp = new int[1];
 	
 	/**
 	 * Data members
 	 */
-	public int[] textureId;
+	public int textureHandle;
 	
 	/**
 	 * Constructor
 	 */
 	public Texture2D()
 	{
-		textureId = new int[1];
-		textureId[0] = 0;
+		textureHandle = 0;
 	}
 	
 	public boolean Create(Bitmap bitmap, boolean mipmap)
@@ -35,13 +38,17 @@ public class Texture2D
 			return false;
 		
 		// generate texture id
-		glGenTextures(1, textureId, 0);
+		glGenTextures(1, temp, 0);
 		
 		// if we got a valid id
-		if(textureId[0] != 0)
-		{					
+		if(temp[0] != 0)
+		{
+			// set id
+			textureHandle = temp[0];
+			temp[0] = 0;
+			
 			// bind
-			glBindTexture(GL_TEXTURE_2D, textureId[0]);
+			glBindTexture(GL_TEXTURE_2D, textureHandle);
 			
 			// load texture to GPU
 			GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
@@ -78,9 +85,12 @@ public class Texture2D
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		
+		//int wrap = GL_REPEAT;
+		int wrap = GL_CLAMP_TO_EDGE;
+		
 		// set wrapping
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
 	}
 	
 	/**
@@ -89,14 +99,14 @@ public class Texture2D
 	 */
 	public void Bind(int unit)
 	{
-		if(this.textureId[0] == 0 || unit < 0)
+		if(textureHandle == 0 || unit < 0)
 			return;
 		
 		// set the unit we put this texture in
 		glActiveTexture(GL_TEXTURE0 + unit );
 		
 		// bind the texture itself
-		glBindTexture(GL_TEXTURE_2D, this.textureId[0]);
+		glBindTexture(GL_TEXTURE_2D, textureHandle);
 	}
 	
 	/**
@@ -110,11 +120,14 @@ public class Texture2D
 	/**
 	 * Dispose of this texture
 	 */
+	@Override
 	public void Dispose()
 	{
-		if(this.textureId[0] == 0)
+		if(textureHandle == 0)
 			return;
 		
-		glDeleteTextures(1, this.textureId, 0);
+		temp[0] = textureHandle;
+		glDeleteTextures(1, temp, 0);
+		textureHandle = temp[0] = 0;
 	}
 }
