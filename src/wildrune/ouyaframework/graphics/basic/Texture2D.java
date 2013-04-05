@@ -23,6 +23,8 @@ public class Texture2D implements IDisposable
 	 * Data members
 	 */
 	public int textureHandle;
+	public int width;
+	public int height;
 	
 	/**
 	 * Constructor
@@ -35,13 +37,20 @@ public class Texture2D implements IDisposable
 	public boolean Create(Bitmap bitmap, boolean mipmap)
 	{
 		if(bitmap == null)
+		{
+			Log.d(LOG_TAG, "Bitmap is null");
 			return false;
+		}
+		
+		// set dimensions
+		width = bitmap.getWidth();
+		height = bitmap.getHeight();
 		
 		// generate texture id
 		glGenTextures(1, temp, 0);
 		
 		// if we got a valid id
-		if(temp[0] != 0)
+		if(temp[0] > 0)
 		{
 			// set id
 			textureHandle = temp[0];
@@ -65,14 +74,16 @@ public class Texture2D implements IDisposable
 			int error = glGetError();
 			if(error != GL_NO_ERROR)
 			{
-				String strError = GLUtils.getEGLErrorString(error);
-				Log.e(LOG_TAG, "Error: " + strError);
-				return false;
+				String msg = GLUtils.getEGLErrorString(error);
+				Log.d(LOG_TAG, msg);
 			}
+			else
+				Log.d(LOG_TAG, "No GL error");
 			
 			return true;
 		}
 		
+		Log.d(LOG_TAG, "No valid texture handle could be retreived");
 		return false;
 	}
 	

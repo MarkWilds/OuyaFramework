@@ -78,6 +78,9 @@ public class Shader
 	 */
 	public boolean Compile()
 	{
+		if(this.mCompiled)
+			return true;
+		
 		// local vars
 		int[] compiled = new int[1];
 		compiled[0] = 0;

@@ -46,11 +46,7 @@ public class ShaderProgram
 	{
 		// create program
 		this.mProgramHandle = glCreateProgram();
-		
-		if(this.mProgramHandle > 0)
-			return true;
-		
-		return false;
+		return (this.mProgramHandle > 0);
 	}
 	
 	
@@ -60,14 +56,24 @@ public class ShaderProgram
 	public void Dispose()
 	{
 		if(this.mProgramHandle > 0)
+		{
 			glDeleteProgram(mProgramHandle);
+			mProgramHandle = 0;
+			mLinked = false;
+		}
 		
 		// dispose of the shaders
 		if(mVertex != null)
+		{
 			mVertex.Dispose();
+			mVertex = null;
+		}
 		
 		if(mFragment != null)
+		{
 			mFragment.Dispose();
+			mFragment = null;
+		}
 	}
 	
 	/**
@@ -87,23 +93,19 @@ public class ShaderProgram
 	 */
 	public boolean LinkShaders(String vertex, String fragment)
 	{
-		Shader svertex = new Shader( vertex, GLES20.GL_VERTEX_SHADER );
-		Shader sfragment = new Shader( fragment, GLES20.GL_FRAGMENT_SHADER );
-		
-		// create shaders
-		svertex.Create();
-		sfragment.Create();
-		
-		// error check
-		if( vertex == null || fragment == null)
+		Shader sVertex = new Shader( vertex, GLES20.GL_VERTEX_SHADER );
+		Shader sFragment = new Shader( fragment, GLES20.GL_FRAGMENT_SHADER );
+
+		// create shaders error check
+		if( !sVertex.Create() || !sFragment.Create())
 			return false;
 		
 		// compile shaders and check if we succeeded
-		if(!svertex.Compile() || !sfragment.Compile())
+		if(!sVertex.Compile() || !sFragment.Compile())
 			return false;
 		
 		// link shaders and check if we succeeded
-		if(!LinkShaders(svertex, sfragment))
+		if(!LinkShaders(sVertex, sFragment))
 			return false;
 		
 		return true;
@@ -119,7 +121,8 @@ public class ShaderProgram
 		if( vertex == null || fragment == null)
 			return false;
 		
-		if( !vertex.IsCompiled() || !fragment.IsCompiled())
+		// check if the shaders are compiled
+		if(!vertex.Compile() || !fragment.Compile())
 			return false;
 		
 		// local vars
