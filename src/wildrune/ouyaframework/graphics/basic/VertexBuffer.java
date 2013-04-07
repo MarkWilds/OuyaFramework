@@ -28,60 +28,83 @@ public class VertexBuffer implements IDisposable
 	private final static IntBuffer tempHandle = BufferUtils.newIntBuffer(1);
 	
 	// private members
+	private final int bufferSize;
 	private final FloatBuffer vertexBuffer;
-	
-	// public members
-	public int bufferHandle;
+	private final boolean isStatic;
+	private final int usage;
+	private int bufferHandle;
 	
 	/**
 	 * Constructor
 	 */
-	public VertexBuffer(float[] vertexData)
+	public VertexBuffer(int bufferSize, boolean isStatic)
 	{
+		// set members
+		this.isStatic = isStatic;
+		this.usage = this.isStatic ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
+		this.bufferSize = bufferSize;
+		bufferHandle = 0;
+		
 		// create the float buffer
 		vertexBuffer = ByteBuffer
-				.allocateDirect(vertexData.length * BYTES_PER_FLOAT)
+				.allocateDirect(bufferSize * BYTES_PER_FLOAT)
 				.order(ByteOrder.nativeOrder())
-				.asFloatBuffer()
-				.put(vertexData);
+				.asFloatBuffer();
 		vertexBuffer.flip();
-		
-		// init id
-		bufferHandle = 0;
 	}
 	
+	/**
+	 * Sets the vertices for this buffer
+	 * @param vertexData the data set for this buffer
+	 */
+	public void SetVertices(float[] vertexData, int offset)
+	{
+		if(offset + vertexData.length > bufferSize)
+		{
+			Log.d(LOG_TAG, "VertexBuffer out of space!");
+			return;
+		}
+		
+		// create the float buffer
+		vertexBuffer.put(vertexData, offset , vertexData.length);
+		vertexBuffer.position(0);
+	}
+	
+	/**
+	 * Creates the VBO and sets its data with the data from the floatbuffer
+	 * @return true if created, false if not
+	 */
 	public boolean Create()
 	{
-		glGenBuffers(1, tempHandle);
-		bufferHandle = tempHandle.get(0);
-		tempHandle.clear();
-		
-		Log.d(LOG_TAG, "VBO handle: " + bufferHandle);
-		
+		// create the buffer
 		if(bufferHandle == 0)
-			return false;
-		
-		glBindBuffer(GL_ARRAY_BUFFER, bufferHandle);
-		
-		Log.d(LOG_TAG, "Buffer byte size: " + vertexBuffer.limit() * BYTES_PER_FLOAT);
-		
-		// HACK FOR TESTING
-		if(vertexBuffer.limit() > 0)
-			glBufferData(GL_ARRAY_BUFFER, vertexBuffer.limit() * BYTES_PER_FLOAT,
-					vertexBuffer, GL_STATIC_DRAW);
-		
-		int error = glGetError();
-		if(error != GL_NO_ERROR)
 		{
-			String msg = GLUtils.getEGLErrorString(error);
-			Log.d(LOG_TAG, msg);
+			glGenBuffers(1, tempHandle);
+			bufferHandle = tempHandle.get(0);
+			tempHandle.clear();
 		}
-		else
-			Log.d(LOG_TAG, "No GL error");
+		else // bound
+		{
+			Bind();
+			
+			// set its data
+			glBufferData(GL_ARRAY_BUFFER, vertexBuffer.limit() * BYTES_PER_FLOAT,
+						this.vertexBuffer, this.usage);
+			
+			// error check
+			int error = glGetError();
+			if(error != GL_NO_ERROR)
+			{
+				String msg = GLUtils.getEGLErrorString(error);
+				Log.d(LOG_TAG, msg);
+			}
+			
+			Unbind();
+			
+			return true;
+		}
 		
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		
-		return true;
+		return false;
 	}
 	
 	/**
@@ -89,8 +112,7 @@ public class VertexBuffer implements IDisposable
 	 */
 	public void Bind()
 	{
-		if(bufferHandle > 0)
-			glBindBuffer(GL_ARRAY_BUFFER, bufferHandle);
+		glBindBuffer(GL_ARRAY_BUFFER, bufferHandle);
 	}
 	
 	/**

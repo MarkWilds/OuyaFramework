@@ -22,12 +22,14 @@ public class RuneMath
 	// ############# MATH POOL ######################
 	private static final ObjectPool<Vec2> mVector2Pool = new ObjectPool<Vec2>(Vec2.class);
 	private static final ObjectPool<Vec3> mVector3Pool = new ObjectPool<Vec3>(Vec3.class);
+	private static final ObjectPool<Vec4> mVector4Pool = new ObjectPool<Vec4>(Vec4.class);
 	private static final ObjectPool<Mat4> mMatrix4Pool = new ObjectPool<Mat4>(Mat4.class);
 	
 	static
 	{
 		Vec2.mParentPool = mVector2Pool;
 		Vec3.mParentPool = mVector3Pool;
+		Vec4.mParentPool = mVector4Pool;
 		Mat4.mParentPool = mMatrix4Pool;
 	}
 	
@@ -40,6 +42,11 @@ public class RuneMath
 	public static Vec3 GetVec3()
 	{
 		return mVector3Pool.Get();
+	}
+	
+	public static Vec4 GetVec4()
+	{
+		return mVector4Pool.Get();
 	}
 	
 	public static Mat4 GetMat4()
@@ -58,6 +65,12 @@ public class RuneMath
 	{
 		vec.Zero();
 		mVector3Pool.Recycle(vec);
+	}
+	
+	public static void Recycle(Vec4 vec)
+	{
+		vec.Zero();
+		mVector4Pool.Recycle(vec);
 	}
 	
 	public static void Recycle(Mat4 mat)

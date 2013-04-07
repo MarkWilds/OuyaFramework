@@ -2,11 +2,8 @@ package wildrune.ouyaframework.util;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.CharBuffer;
-import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.nio.LongBuffer;
 import java.nio.ShortBuffer;
 
 public class BufferUtils 
@@ -15,12 +12,6 @@ public class BufferUtils
 		ByteBuffer buffer = ByteBuffer.allocateDirect(numFloats * 4);
 		buffer.order(ByteOrder.nativeOrder());
 		return buffer.asFloatBuffer();
-	}
-
-	public static DoubleBuffer newDoubleBuffer (int numDoubles) {
-		ByteBuffer buffer = ByteBuffer.allocateDirect(numDoubles * 8);
-		buffer.order(ByteOrder.nativeOrder());
-		return buffer.asDoubleBuffer();
 	}
 
 	public static ByteBuffer newByteBuffer (int numBytes) {
@@ -35,21 +26,9 @@ public class BufferUtils
 		return buffer.asShortBuffer();
 	}
 
-	public static CharBuffer newCharBuffer (int numChars) {
-		ByteBuffer buffer = ByteBuffer.allocateDirect(numChars * 2);
-		buffer.order(ByteOrder.nativeOrder());
-		return buffer.asCharBuffer();
-	}
-
 	public static IntBuffer newIntBuffer (int numInts) {
 		ByteBuffer buffer = ByteBuffer.allocateDirect(numInts * 4);
 		buffer.order(ByteOrder.nativeOrder());
 		return buffer.asIntBuffer();
-	}
-
-	public static LongBuffer newLongBuffer (int numLongs) {
-		ByteBuffer buffer = ByteBuffer.allocateDirect(numLongs * 8);
-		buffer.order(ByteOrder.nativeOrder());
-		return buffer.asLongBuffer();
 	}
 }
