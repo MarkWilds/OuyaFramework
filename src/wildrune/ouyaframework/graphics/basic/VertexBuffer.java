@@ -28,7 +28,6 @@ public class VertexBuffer implements IDisposable
 	private final static IntBuffer tempHandle = BufferUtils.newIntBuffer(1);
 	
 	// private members
-	private final int bufferSize;
 	private final FloatBuffer vertexBuffer;
 	private final boolean isStatic;
 	private final int usage;
@@ -42,7 +41,6 @@ public class VertexBuffer implements IDisposable
 		// set members
 		this.isStatic = isStatic;
 		this.usage = this.isStatic ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-		this.bufferSize = bufferSize;
 		bufferHandle = 0;
 		
 		// create the float buffer
@@ -50,25 +48,8 @@ public class VertexBuffer implements IDisposable
 				.allocateDirect(bufferSize * BYTES_PER_FLOAT)
 				.order(ByteOrder.nativeOrder())
 				.asFloatBuffer();
-		vertexBuffer.flip();
 	}
 	
-	/**
-	 * Sets the vertices for this buffer
-	 * @param vertexData the data set for this buffer
-	 */
-	public void SetVertices(float[] vertexData, int offset)
-	{
-		if(offset + vertexData.length > bufferSize)
-		{
-			Log.d(LOG_TAG, "VertexBuffer out of space!");
-			return;
-		}
-		
-		// create the float buffer
-		vertexBuffer.put(vertexData, offset , vertexData.length);
-		vertexBuffer.position(0);
-	}
 	
 	/**
 	 * Creates the VBO and sets its data with the data from the floatbuffer
@@ -82,29 +63,62 @@ public class VertexBuffer implements IDisposable
 			glGenBuffers(1, tempHandle);
 			bufferHandle = tempHandle.get(0);
 			tempHandle.clear();
-		}
-		else // bound
-		{
+			
 			Bind();
 			
-			// set its data
-			glBufferData(GL_ARRAY_BUFFER, vertexBuffer.limit() * BYTES_PER_FLOAT,
-						this.vertexBuffer, this.usage);
-			
-			// error check
-			int error = glGetError();
-			if(error != GL_NO_ERROR)
+			// if this a dynamic buffer we create a empty GPU buffer
+			if(usage == GL_DYNAMIC_DRAW)
 			{
-				String msg = GLUtils.getEGLErrorString(error);
-				Log.d(LOG_TAG, msg);
+				glBufferData(GL_ARRAY_BUFFER, vertexBuffer.capacity() * BYTES_PER_FLOAT,
+						null, this.usage);
 			}
-			
-			Unbind();
 			
 			return true;
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Sets the vertices array for this buffer
+	 * @param vertexData the data set for this buffer
+	 */
+	public void SetData(int bufferOffset, float[] vertexData, int offset, int length)
+	{
+		if( bufferOffset + (length - offset) > vertexBuffer.limit())
+		{
+			Log.d(LOG_TAG, "Size to write is to big for the vertexBuffer");
+			return;
+		}
+		
+		// create the float buffer
+		vertexBuffer.position(bufferOffset);
+		vertexBuffer.put(vertexData, offset, length);
+	}
+	
+	/**
+	 * Resolves this buffer
+	 */
+	public void Apply()
+	{		
+		// set its data
+		vertexBuffer.position(0);
+		
+		if(usage == GL_STATIC_DRAW)
+			glBufferData(GL_ARRAY_BUFFER, vertexBuffer.limit() * BYTES_PER_FLOAT,
+					this.vertexBuffer, this.usage);
+		else
+			glBufferSubData(GL_ARRAY_BUFFER, 0, vertexBuffer.limit() * BYTES_PER_FLOAT, vertexBuffer);
+		
+		vertexBuffer.clear();
+		
+		// error check
+		int error = glGetError();
+		if(error != GL_NO_ERROR)
+		{
+			String msg = GLUtils.getEGLErrorString(error);
+			Log.d(LOG_TAG, msg);
+		}
 	}
 	
 	/**

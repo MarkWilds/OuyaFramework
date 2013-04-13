@@ -22,7 +22,6 @@ public class IndexBuffer implements IDisposable
 	private final static IntBuffer tempHandle = BufferUtils.newIntBuffer(1);
 	
 	// private members
-	private final int bufferSize;
 	private final ShortBuffer indexBuffer;
 	private final boolean isStatic;
 	private final int usage;
@@ -36,7 +35,6 @@ public class IndexBuffer implements IDisposable
 		// set members
 		this.isStatic = isStatic;
 		this.usage = this.isStatic ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-		this.bufferSize = bufferSize;
 		bufferHandle = 0;
 		
 		// create the float buffer
@@ -44,28 +42,10 @@ public class IndexBuffer implements IDisposable
 				.allocateDirect(bufferSize * BYTES_PER_SHORT)
 				.order(ByteOrder.nativeOrder())
 				.asShortBuffer();
-		indexBuffer.flip();
 	}
 	
 	/**
-	 * Sets the indices for this buffer
-	 * @param indexData the data set for this buffer
-	 */
-	public void SetIndices(short[] indexData, int offset)
-	{
-		if(offset + indexData.length > bufferSize)
-		{
-			Log.d(LOG_TAG, "IndexBuffer out of space!");
-			return;
-		}
-		
-		// create the float buffer
-		indexBuffer.put(indexData, offset , indexData.length);
-		indexBuffer.position(0);
-	}
-	
-	/**
-	 * Creates the VBO and sets its data with the data from the shortBuffer
+	 * Creates the VBO and sets its data with the data from the shortbuffer
 	 * @return true if created, false if not
 	 */
 	public boolean Create()
@@ -76,29 +56,62 @@ public class IndexBuffer implements IDisposable
 			glGenBuffers(1, tempHandle);
 			bufferHandle = tempHandle.get(0);
 			tempHandle.clear();
-		}
-		else // bound
-		{
+			
 			Bind();
 			
-			// set its data
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * BYTES_PER_SHORT,
-						this.indexBuffer, this.usage);
-			
-			// error check
-			int error = glGetError();
-			if(error != GL_NO_ERROR)
+			// if this a dynamic buffer we create a empty GPU buffer
+			if(usage == GL_DYNAMIC_DRAW)
 			{
-				String msg = GLUtils.getEGLErrorString(error);
-				Log.d(LOG_TAG, msg);
+				glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.capacity() * BYTES_PER_SHORT,
+						null, this.usage);
 			}
-			
-			Unbind();
 			
 			return true;
 		}
 		
 		return false;
+	}
+	
+	/**
+	 * Sets the indices array for this buffer
+	 * @param indexData the data set for this buffer
+	 */
+	public void SetData(int bufferOffset, short[] indexData, int offset, int length)
+	{
+		if( bufferOffset + (length - offset) > indexBuffer.limit())
+		{
+			Log.d(LOG_TAG, "Size to write is to big for the indexBuffer");
+			return;
+		}
+		
+		// create the short buffer
+		indexBuffer.position(bufferOffset);
+		indexBuffer.put(indexData, offset, length);
+	}
+	
+	/**
+	 * Resolves this buffer
+	 */
+	public void Apply()
+	{		
+		// set its data
+		indexBuffer.position(0);
+		
+		if(usage == GL_STATIC_DRAW)
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * BYTES_PER_SHORT,
+					this.indexBuffer, this.usage);
+		else
+			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexBuffer.limit() * BYTES_PER_SHORT, indexBuffer);
+		
+		indexBuffer.clear();
+		
+		// error check
+		int error = glGetError();
+		if(error != GL_NO_ERROR)
+		{
+			String msg = GLUtils.getEGLErrorString(error);
+			Log.d(LOG_TAG, msg);
+		}
 	}
 	
 	/**
