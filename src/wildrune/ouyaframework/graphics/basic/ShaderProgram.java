@@ -2,12 +2,6 @@ package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
 
-import java.nio.IntBuffer;
-import java.util.HashMap;
-
-import wildrune.ouyaframework.util.BufferUtils;
-
-import android.opengl.GLES20;
 import android.util.Log;
 
 /**
@@ -27,9 +21,6 @@ public class ShaderProgram
 	
 	private Shader mVertex;
 	private Shader mFragment;
-	
-	//private HashMap<String, Integer> mAttributes;
-	//private HashMap<String, Integer> mUniforms;
 	
 	/**
 	 * Getters
@@ -104,8 +95,8 @@ public class ShaderProgram
 	 */
 	public boolean LinkShaders(String vertex, String fragment)
 	{
-		Shader sVertex = new Shader( vertex, GLES20.GL_VERTEX_SHADER );
-		Shader sFragment = new Shader( fragment, GLES20.GL_FRAGMENT_SHADER );
+		Shader sVertex = new Shader( vertex, GL_VERTEX_SHADER );
+		Shader sFragment = new Shader( fragment, GL_FRAGMENT_SHADER );
 
 		// create shaders error check
 		if( !sVertex.Create() || !sFragment.Create())
@@ -164,10 +155,6 @@ public class ShaderProgram
 			return false;
 		}
 		
-		// fetch attribute and uniforms
-		FetchAttributes();
-		FetchUniforms();
-		
 		return true;
 	}
 	
@@ -207,44 +194,6 @@ public class ShaderProgram
 	public int GetUniformLocation(String uniformName)
 	{
 		return glGetUniformLocation( this.mProgramHandle, uniformName);
-	}
-	
-	//IntBuffer params = BufferUtils.newIntBuffer(1);
-	//IntBuffer type = BufferUtils.newIntBuffer(1);
-	
-	/**
-	 * Fetch all attributes
-	 */
-	private void FetchAttributes()
-	{
-
-	}
-	
-	/**
-	 * Fetch all uniforms
-	 */
-	private void FetchUniforms()
-	{/*
-		params.clear();
-		glGetProgramiv(mProgramHandle, GL_ACTIVE_UNIFORMS, params);
-		int numUniforms = params.get(0);
-		byte[] bname = new byte[128];
-
-		for (int i = 0; i < numUniforms; i++) {
-			params.clear();
-			params.put(0, 1);
-			type.clear();
-			
-			// get the uniform name
-			glGetActiveUniform(mProgramHandle, i, params, type, bname);
-			String name = new String(bname);
-			
-			// get the uniform location
-			int location = glGetUniformLocation(mProgramHandle, name);
-			
-			// put the data in the map
-			mUniforms.put(name, location);
-		}*/
 	}
 	
 	/**

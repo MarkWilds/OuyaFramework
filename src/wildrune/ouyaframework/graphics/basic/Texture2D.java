@@ -1,6 +1,7 @@
 package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
+
 import wildrune.ouyaframework.util.interfaces.IDisposable;
 import android.graphics.Bitmap;
 import android.opengl.GLUtils;
@@ -12,7 +13,7 @@ import android.util.Log;
  * @author Wildrune
  *
  */
-public class Texture2D implements IDisposable
+public class Texture2D implements IDisposable, Comparable<Texture2D>
 {	
 	private final static String LOG_TAG = "Texture2D";
 	
@@ -34,6 +35,24 @@ public class Texture2D implements IDisposable
 		textureHandle = 0;
 	}
 	
+	/**
+	 * Compare this texture against another texture
+	 */
+	@Override
+	public int compareTo(Texture2D tex)
+	{
+		if(tex == null)
+			return 1;
+		
+		return this.textureHandle - tex.textureHandle;
+	}
+	
+	/**
+	 * Create this texture from a bitmap
+	 * @param bitmap
+	 * @param mipmap
+	 * @return
+	 */
 	public boolean Create(Bitmap bitmap, boolean mipmap)
 	{
 		if(bitmap == null)

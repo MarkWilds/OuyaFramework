@@ -1,8 +1,14 @@
 package wildrune.ouyaframework.graphics;
 
+import static android.opengl.GLES20.*;
+
+import java.util.Arrays;
+import java.util.Comparator;
+
 import wildrune.ouyaframework.graphics.basic.*;
 import wildrune.ouyaframework.math.*;
 import android.graphics.Rect;
+import android.opengl.GLES20;
 import android.util.Log;
 
 /**
@@ -13,13 +19,6 @@ import android.util.Log;
  */
 public class SpriteBatch 
 {
-	private final static String LOG_TAG = "Spritebatch";
-	
-	private final static int POSITION_ELEMENT_COUNT = 3;
-	private final static int COLOR_ELEMENT_COUNT = 4;
-	private final static int UV_ELEMENT_COUNT = 2;
-	private final static int VERTEX_ELEMENTS = POSITION_ELEMENT_COUNT * COLOR_ELEMENT_COUNT * UV_ELEMENT_COUNT;
-	
 	public enum SpriteEffect
 	{
 		NONE,
@@ -36,12 +35,64 @@ public class SpriteBatch
 		FRONTTOBACK
 	}
 	
-	// Constants
+	/**
+	 * Texture comparator
+	 */
+	private class TextureComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs){
+			return lhs.texture.textureHandle - rhs.texture.textureHandle;
+		}
+	}
+	
+	/**
+	 * BackToFront comparator
+	 */
+	private class BackToFrontComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) {
+			return (int) (lhs.originRotationDepth.z - rhs.originRotationDepth.z);
+		}
+		
+	}
+	
+	/**
+	 * FrontToBack comparator
+	 */
+	private class FrontToBackComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) {
+			return (int) (rhs.originRotationDepth.z - lhs.originRotationDepth.z);
+		}
+		
+	}
+	
+	// static constants
+	private final static String LOG_TAG = "Spritebatch";
+	
+	private final static int BYTES_PER_FLOAT = 4;
+	private final static int POSITION_ELEMENT_COUNT = 3;
+	private final static int COLOR_ELEMENT_COUNT = 4;
+	private final static int UV_ELEMENT_COUNT = 2;
+	private final static int VERTEX_ELEMENTS = POSITION_ELEMENT_COUNT * COLOR_ELEMENT_COUNT * UV_ELEMENT_COUNT;
+	
+	// batch data
 	private final static int maxBatchSize = 2048;
-	private final static int minBatchSize = 128;
+	//private final static int minBatchSize = 128;
 	private final static int initialQueueSize = 64;
 	private final static int verticesPerSprite = 4;
 	private final static int indicesPerSprite = 6;
+	
+	// temp spriteinfo variable
+	private final static SpriteInfo tempSprite = new SpriteInfo();
+	
+	// comparators
+	private final TextureComp TexComp = new TextureComp();
+	private final BackToFrontComp BackFrontComp = new BackToFrontComp();
+	private final FrontToBackComp FrontBackComp = new FrontToBackComp();
 	
 	// members
 	private SpriteInfo[] 	spriteInfoQueue;
@@ -61,20 +112,34 @@ public class SpriteBatch
 	private ShaderProgram 	spriteBatchProgram;
 	private Mat4			transformMatrix;
 	
+	// shader program locations
+	int matrixLocaton;
+	int aPosition;
+	int aColor;
+	int aTexCoord;
+	
 	/**
 	 * Constructors
 	 */
-	public SpriteBatch(ShaderProgram spriteProgram)
+	public SpriteBatch(ShaderProgram spriteProgram, Graphics graphics)
 	{
 		// create buffers
 		vertexBuffer = new VertexBuffer(VERTEX_ELEMENTS * maxBatchSize * verticesPerSprite, false);
-		indexBuffer = new IndexBuffer(maxBatchSize * indicesPerSprite, true);
+		vertexBuffer.Create();
 		
-		// generate buffers
+		// generate indices
+		indexBuffer = new IndexBuffer(maxBatchSize * indicesPerSprite, true);
 		CreateIndexValues();
 		
 		// create the used shader program
 		spriteBatchProgram = spriteProgram;
+		matrixLocaton = spriteBatchProgram.GetUniformLocation("uMVP");
+		aPosition = spriteBatchProgram.GetAttribLocation("a_position");
+		aColor = spriteBatchProgram.GetAttribLocation("a_color");
+		aTexCoord = spriteBatchProgram.GetAttribLocation("a_texcoord_one");
+		
+		// create the transform matrix
+		transformMatrix = Mat4.CreateOrtho2D(graphics.viewportNormal.width(), graphics.viewportNormal.height());
 		
 		// create the sprite queue
 		spriteInfoQueue = new SpriteInfo[initialQueueSize];
@@ -83,13 +148,39 @@ public class SpriteBatch
 		beginEndPair = false;
 		
 		spriteSortMode = SpriteSortMode.DEFERRED;
+	}
+	
+	/**
+	 * We can precache the indices as they will never change.
+	 */
+	private void CreateIndexValues()
+	{
+		// create temp array
+		short[] indices = new short[maxBatchSize * indicesPerSprite];
 		
+		// fill the array
+		int startOffset = 0;
+		for(short i = 0; i < maxBatchSize * verticesPerSprite; i += verticesPerSprite)
+		{
+			indices[startOffset++] = i;
+			indices[startOffset++] = (short) (i + 1);
+			indices[startOffset++] = (short) (i + 2);
+			
+			indices[startOffset++] = (short) i;
+			indices[startOffset++] = (short) (i + 2);
+			indices[startOffset++] = (short) (i + 3);
+			
+		}
+		
+		// create the indexbuffer
+		indexBuffer.SetData(0, indices, 0, indices.length);
+		indexBuffer.Create();
 	}
 	
 	/**
 	 * Start the spritebatch drawing
 	 */
-	public void Begin(/* spritemode, blendstate, samplerstate, depthstate, rasterizerstate*/Mat4 transformMatrix)
+	public void Begin(SpriteSortMode sortMode/* blendstate, samplerstate, depthstate, rasterizerstate*/)
 	{
 		// error check
 		if(beginEndPair)
@@ -97,9 +188,9 @@ public class SpriteBatch
 			Log.e(LOG_TAG, "Cannot nest Begin calls on a single SpriteBatch");
 			return;
 		}
-			
-		// set render states and batch states
-		this.transformMatrix = transformMatrix;
+		
+		// set state
+		spriteSortMode = sortMode;
 		
 		// set start batching
 		if(spriteSortMode == SpriteSortMode.IMMEDIATE)
@@ -134,7 +225,7 @@ public class SpriteBatch
 	/**
 	 * Draws a sprite
 	 */
-	public void DrawSprite(Texture2D texture, Rect destination, Rect sourceRect, Color color, Vec4 originDepthRotation)
+	private void DrawSprite(Texture2D texture, Rect destination, Rect sourceRect, Color color, Vec4 originDepthRotation)
 	{
 		// error chec
 		if(texture == null)
@@ -178,44 +269,35 @@ public class SpriteBatch
 		// check sort mode and react upon
 		if(spriteSortMode == SpriteSortMode.IMMEDIATE)
 			// draw the texture directly
-			RenderBatch(texture, spriteInfo, 1);
+			RenderBatch(texture, spriteQueueCount, 1);
 		else
 			// Queue this sprite for later sorting and batched rendering
 			spriteQueueCount++;
 	}
 	
 	/**
+	 * Standard draw sprite overload
+	 * @param texture
+	 * @param position
+	 */
+	public void DrawSprite(Texture2D texture, Vec2 position)
+	{
+		// set destination
+		tempSprite.destination.left = (int)position.x;
+		tempSprite.destination.top = (int)position.y;
+		tempSprite.destination.right = texture.width;
+		tempSprite.destination.bottom = texture.height;
+		
+		// "draw" the sprite
+		DrawSprite(texture, tempSprite.destination, tempSprite.source, 
+				Color.WHITE, tempSprite.originRotationDepth);
+	}
+	
+	/**
 	 * Draws text
 	 */
-	public void DrawText(){}
-	
-	// INIT METHODS
-	/**
-	 * We can precache the indices as they will never change.
-	 */
-	private void CreateIndexValues()
-	{
-		// create temp array
-		short[] indices = new short[maxBatchSize * indicesPerSprite];
-		
-		// fill the array
-		int startOffset = 0;
-		for(short i = 0; i < maxBatchSize * verticesPerSprite; i += verticesPerSprite)
-		{
-			indices[startOffset++] = i;
-			indices[startOffset++] = (short) (i + 1);
-			indices[startOffset++] = (short) (i + 2);
-			
-			indices[startOffset++] = (short) i;
-			indices[startOffset++] = (short) (i + 2);
-			indices[startOffset++] = (short) (i + 3);
-			
-		}
-		
-		// create the indexbuffer
-		indexBuffer.SetData(0, indices, 0, indices.length);
-		indexBuffer.Create();
-	}
+	public void DrawText(Font font, Vec2 position, String text){}	// INIT METHODS
+
 	
 	// MANAGEMENT
 	/**
@@ -237,17 +319,20 @@ public class SpriteBatch
 	}
 	
 	/**
-	 * Sort the queue based on the spritesortmode
+	 * Sort the queue based on the sprite sort mode
 	 */
 	private void SortSprites() 
 	{
 		switch(spriteSortMode)
 		{
 			case TEXTURE:
+				Arrays.sort(spriteInfoQueue, this.TexComp);
 				break;
 			case BACKTOFRONT:
+				Arrays.sort(spriteInfoQueue, this.BackFrontComp);
 				break;
 			case FRONTTOBACK:
+				Arrays.sort(spriteInfoQueue, this.FrontBackComp);
 				break;
 		}
 	}
@@ -258,83 +343,102 @@ public class SpriteBatch
 	 */
 	private void PrepareForRendering() 
 	{
+		// set the shader program
 		spriteBatchProgram.Bind();
+		spriteBatchProgram.SetUniform(matrixLocaton, transformMatrix.elements);
+		
+		// set the vertex buffer and attribute pointers
 		vertexBuffer.Bind();
+		vertexBuffer.SetVertexAttribPointer(0, aPosition, 3, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		vertexBuffer.SetVertexAttribPointer(3 * BYTES_PER_FLOAT, aColor, 4, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		vertexBuffer.SetVertexAttribPointer(7 * BYTES_PER_FLOAT, aTexCoord, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		
+		// set indexbuffer
 		indexBuffer.Bind();
 	}
 	
+	/**
+	 * Start flushing the sprites to the GPU
+	 */
 	private void FlushBatch() 
 	{
+		if(spriteQueueCount <= 0)
+			return;
+		
 		// sort the sprites
 		SortSprites();
-	}
-	
-	private void RenderBatch(Texture2D tex, SpriteInfo spriteInfo, int count)
-	{
 		
-	}
-	
-	private void RenderSprite()
-	{
+		// used vars
+		Texture2D batchTexture = null;;
+		int batchStart = 0;
 		
-	}
-	
-	/**
-	 * Holding current frame sprite info!
-	 * @author Wildrune
-	 *
-	 */
-	private class SpriteInfo
-	{
-		public Rect source;
-		public Rect destination;
-		public Texture2D texture;
-		public Color color;
-		public Vec4 originRotationDepth;
-		
-		public SpriteInfo()
+		// iterate all sprites
+		for(int pos = 0; pos < spriteQueueCount; pos++)
 		{
-			source = new Rect();
-			destination = new Rect();
-			texture = null;
-			color = new Color();
-			originRotationDepth = new Vec4();
+			Texture2D spriteTexture = spriteInfoQueue[pos].texture;
+			
+			// compare textures
+			if(spriteTexture.compareTo(batchTexture) != 0)
+			{
+				if(pos > batchStart)
+				{
+					RenderBatch(batchTexture, batchStart, pos - batchStart);
+				}
+				
+				batchTexture = spriteTexture;
+				batchStart += pos;
+			}
 		}
 		
-		/**
-		 * Overloaded constructor
-		 */
-		public SpriteInfo(Texture2D tex, Rect source, Rect dest, Color color, Vec4 ord)
-		{
-			this.texture = tex;
-			this.source = source;
-			this.destination = dest;
-			this.color = color;
-			this.originRotationDepth = ord;
-		}
-	}
-
-	/**
-	 * Encodes the values into a vector4
-	 */
-	public static Vec4 ToOriginRotDepth(Vec2 origin, float rot, float depth)
-	{
-		return ToOriginRotDepth(origin.x, origin.y, rot, depth);
+		// render final batch
+		RenderBatch(batchTexture, batchStart, spriteQueueCount - batchStart);
+		
+		// clear data
+		spriteQueueCount = 0;
 	}
 	
 	/**
-	 * Encodes the values into a vector4
+	 * Render a batch
+	 * @param tex
+	 * @param spriteBatchStart
+	 * @param count
 	 */
-	public static Vec4 ToOriginRotDepth(float oX, float oY, float rot, float depth)
+	private void RenderBatch(Texture2D tex, int spriteBatchStart, int count)
 	{
-		Vec4 encodedVec = RuneMath.GetVec4();
+		// bind the texture
+		tex.Bind(0);
 		
-		// set values
-		encodedVec.x = oX;
-		encodedVec.y = oY;
-		encodedVec.z = rot;
-		encodedVec.w = depth;
+		// iterate all sprites
+		while(count > 0)
+		{
+			int batchSize = count;
+			// int remainingSpace
+			
+			// check if we have room for all the sprites we want to draw
+			
+			// generate sprite vertex data
+			for(int i = 0; i < batchSize; i++)
+			{
+				RenderSprite(spriteInfoQueue[ spriteBatchStart + i]);
+			}
+			
+			count -= batchSize;
+			spriteBatchStart += batchSize;
+		}
 		
-		return encodedVec;
+		// draw the sprites
+		glDrawElements(GL_TRIANGLES, count * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
+	}
+	
+	/**
+	 * Generate the vertex attributes from sprite data
+	 * and put these in the vertexbuffer
+	 * @param sprite
+	 */
+	private void RenderSprite(SpriteInfo sprite)
+	{
+		// setup vertex attributes
+		
+		// put into vertexbuffer
 	}
 }

@@ -29,6 +29,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	// start flags
 	protected boolean isDebugMode;
 	protected boolean isLowResMode;
+	protected boolean isSampling;
 	
 	// ==================== SUBSYSTEMS ==========================
 	protected Graphics 		Graphics;
@@ -55,6 +56,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		isGameStopping = false;
 		isLowResMode = false;
 		isDebugMode = false;
+		isSampling = false;
 	}
 	
 	/***
@@ -75,6 +77,12 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		// set other options
 		gameView.setPreserveEGLContextOnPause(true);
 		gameView.setEGLContextClientVersion(2);
+		
+		// if we want anti aliasing
+		if(isSampling)
+		{
+			gameView.setEGLConfigChooser(new MultisampleConfigChooser());
+		}
 		
 		// set the main view
 		setContentView(gameView);
