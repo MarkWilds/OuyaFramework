@@ -70,7 +70,16 @@ public class VertexBuffer implements IDisposable
 			if(usage == GL_DYNAMIC_DRAW)
 			{
 				glBufferData(GL_ARRAY_BUFFER, vertexBuffer.capacity() * BYTES_PER_FLOAT,
-						null, this.usage);
+						vertexBuffer, this.usage);
+				
+				int error = glGetError();
+				if(error != GL_NO_ERROR)
+				{
+					String msg = GLUtils.getEGLErrorString(error);
+					Log.d(LOG_TAG, msg);
+				}
+				else
+					Log.d(LOG_TAG, "No GL error");
 			}
 			
 			return true;

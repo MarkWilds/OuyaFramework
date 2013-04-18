@@ -145,11 +145,13 @@ public class Clock
 		// update all timers
 		if(!mTimers.isEmpty())
 		{
-			for(Clock.Timer timer: mTimers)
+			List<Clock.Timer> localTimers = mTimers;
+			int timerLength = mTimers.size();
+			for(int i = 0; i < timerLength; i++)
 			{
-				timer.mElapsedGameTime = frameTime;
-				timer.mTotalGameTime = mTotalTime;
-				timer.mIsRunningSlowly = slow;
+				localTimers.get(i).mElapsedGameTime = frameTime;
+				localTimers.get(i).mTotalGameTime = mTotalTime;
+				localTimers.get(i).mIsRunningSlowly = slow;
 			}
 		}
 	}

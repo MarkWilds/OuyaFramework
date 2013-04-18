@@ -8,7 +8,6 @@ import java.util.Comparator;
 import wildrune.ouyaframework.graphics.basic.*;
 import wildrune.ouyaframework.math.*;
 import android.graphics.Rect;
-import android.opengl.GLES20;
 import android.util.Log;
 
 /**
@@ -74,14 +73,13 @@ public class SpriteBatch
 	private final static String LOG_TAG = "Spritebatch";
 	
 	private final static int BYTES_PER_FLOAT = 4;
-	private final static int POSITION_ELEMENT_COUNT = 3;
+	private final static int POSITION_ELEMENT_COUNT = 2;
 	private final static int COLOR_ELEMENT_COUNT = 4;
 	private final static int UV_ELEMENT_COUNT = 2;
-	private final static int VERTEX_ELEMENTS = POSITION_ELEMENT_COUNT * COLOR_ELEMENT_COUNT * UV_ELEMENT_COUNT;
+	private final static int VERTEX_ELEMENTS = POSITION_ELEMENT_COUNT + COLOR_ELEMENT_COUNT + UV_ELEMENT_COUNT;
 	
 	// batch data
-	private final static int maxBatchSize = 2048;
-	//private final static int minBatchSize = 128;
+	private final static int maxBatchSize = 1024;
 	private final static int initialQueueSize = 64;
 	private final static int verticesPerSprite = 4;
 	private final static int indicesPerSprite = 6;
@@ -117,12 +115,22 @@ public class SpriteBatch
 	int aPosition;
 	int aColor;
 	int aTexCoord;
+	int uTexOne;
 	
 	/**
 	 * Constructors
 	 */
-	public SpriteBatch(ShaderProgram spriteProgram, Graphics graphics)
+	public SpriteBatch(Graphics graphics, ShaderProgram shaderProgram)
 	{
+		// create the used shader program
+		spriteBatchProgram = shaderProgram;
+		
+		matrixLocaton = spriteBatchProgram.GetUniformLocation("uMVP");
+		aPosition = spriteBatchProgram.GetAttribLocation("a_position");
+		aColor = spriteBatchProgram.GetAttribLocation("a_color");
+		aTexCoord = spriteBatchProgram.GetAttribLocation("a_texcoord_one");
+		uTexOne = spriteBatchProgram.GetUniformLocation("u_texture_one");
+		
 		// create buffers
 		vertexBuffer = new VertexBuffer(VERTEX_ELEMENTS * maxBatchSize * verticesPerSprite, false);
 		vertexBuffer.Create();
@@ -130,13 +138,6 @@ public class SpriteBatch
 		// generate indices
 		indexBuffer = new IndexBuffer(maxBatchSize * indicesPerSprite, true);
 		CreateIndexValues();
-		
-		// create the used shader program
-		spriteBatchProgram = spriteProgram;
-		matrixLocaton = spriteBatchProgram.GetUniformLocation("uMVP");
-		aPosition = spriteBatchProgram.GetAttribLocation("a_position");
-		aColor = spriteBatchProgram.GetAttribLocation("a_color");
-		aTexCoord = spriteBatchProgram.GetAttribLocation("a_texcoord_one");
 		
 		// create the transform matrix
 		transformMatrix = Mat4.CreateOrtho2D(graphics.viewportNormal.width(), graphics.viewportNormal.height());
@@ -148,6 +149,16 @@ public class SpriteBatch
 		beginEndPair = false;
 		
 		spriteSortMode = SpriteSortMode.DEFERRED;
+	}
+
+	/**
+	 * Dispose of used resources
+	 */
+	public void Dispose()
+	{
+		spriteBatchProgram.Dispose();
+		vertexBuffer.Dispose();
+		indexBuffer.Dispose();
 	}
 	
 	/**
@@ -175,6 +186,7 @@ public class SpriteBatch
 		// create the indexbuffer
 		indexBuffer.SetData(0, indices, 0, indices.length);
 		indexBuffer.Create();
+		indexBuffer.Apply();
 	}
 	
 	/**
@@ -207,7 +219,7 @@ public class SpriteBatch
 	public void End()
 	{
 		// error check
-		if(beginEndPair)
+		if(!beginEndPair)
 		{
 			Log.e(LOG_TAG, "Begin must be called before End");
 			return;
@@ -243,9 +255,12 @@ public class SpriteBatch
 		// get spriteInfo reference
 		SpriteInfo spriteInfo = spriteInfoQueue[spriteQueueCount];
 		
+		if(spriteInfo == null)
+			Log.d(LOG_TAG, "SpriteInfo is null" );
+		
 		// store spriteInfo parameters
-		spriteInfo.color = color;
 		spriteInfo.destination = destination;
+		spriteInfo.color = color;
 		spriteInfo.originRotationDepth = originDepthRotation;
 		spriteInfo.texture = texture;
 		
@@ -346,12 +361,13 @@ public class SpriteBatch
 		// set the shader program
 		spriteBatchProgram.Bind();
 		spriteBatchProgram.SetUniform(matrixLocaton, transformMatrix.elements);
+		spriteBatchProgram.SetUniform(uTexOne, 0);
 		
 		// set the vertex buffer and attribute pointers
 		vertexBuffer.Bind();
-		vertexBuffer.SetVertexAttribPointer(0, aPosition, 3, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
-		vertexBuffer.SetVertexAttribPointer(3 * BYTES_PER_FLOAT, aColor, 4, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
-		vertexBuffer.SetVertexAttribPointer(7 * BYTES_PER_FLOAT, aTexCoord, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		vertexBuffer.SetVertexAttribPointer(0, aPosition, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		vertexBuffer.SetVertexAttribPointer(2 * BYTES_PER_FLOAT, aColor, 4, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		vertexBuffer.SetVertexAttribPointer(6 * BYTES_PER_FLOAT, aTexCoord, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
 		
 		// set indexbuffer
 		indexBuffer.Bind();
@@ -369,7 +385,7 @@ public class SpriteBatch
 		SortSprites();
 		
 		// used vars
-		Texture2D batchTexture = null;;
+		Texture2D batchTexture = null;
 		int batchStart = 0;
 		
 		// iterate all sprites
@@ -412,14 +428,14 @@ public class SpriteBatch
 		while(count > 0)
 		{
 			int batchSize = count;
-			// int remainingSpace
 			
+			// int remainingSpace
 			// check if we have room for all the sprites we want to draw
 			
 			// generate sprite vertex data
 			for(int i = 0; i < batchSize; i++)
 			{
-				RenderSprite(spriteInfoQueue[ spriteBatchStart + i]);
+				RenderSprite(spriteInfoQueue[ spriteBatchStart + i], verticesPerSprite * i );
 			}
 			
 			count -= batchSize;
@@ -427,6 +443,7 @@ public class SpriteBatch
 		}
 		
 		// draw the sprites
+		vertexBuffer.Apply();
 		glDrawElements(GL_TRIANGLES, count * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
 	}
 	
@@ -435,9 +452,15 @@ public class SpriteBatch
 	 * and put these in the vertexbuffer
 	 * @param sprite
 	 */
-	private void RenderSprite(SpriteInfo sprite)
+	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
 	{
+		float rotation = sprite.originRotationDepth.z;
+			
 		// setup vertex attributes
+		if(rotation != 0)
+		{
+			 
+		}
 		
 		// put into vertexbuffer
 	}
