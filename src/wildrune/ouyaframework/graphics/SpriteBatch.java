@@ -40,7 +40,14 @@ public class SpriteBatch
 	private class TextureComp implements Comparator<SpriteInfo>
 	{
 		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs){
+		public int compare(SpriteInfo lhs, SpriteInfo rhs)
+		{
+			if(lhs == null || lhs.texture == null)
+				return 1;
+			
+			if(rhs == null || rhs.texture == null)
+				return -1;
+			
 			return lhs.texture.textureHandle - rhs.texture.textureHandle;
 		}
 	}
@@ -51,7 +58,14 @@ public class SpriteBatch
 	private class BackToFrontComp implements Comparator<SpriteInfo>
 	{
 		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs) {
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
+		{
+			if(lhs == null)
+				return 1;
+			
+			if(rhs == null)
+				return -1;
+			
 			return (int) (lhs.originRotationDepth.z - rhs.originRotationDepth.z);
 		}
 		
@@ -63,7 +77,14 @@ public class SpriteBatch
 	private class FrontToBackComp implements Comparator<SpriteInfo>
 	{
 		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs) {
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
+		{
+			if(lhs == null)
+				return -1;
+			
+			if(rhs == null)
+				return 1;
+			
 			return (int) (rhs.originRotationDepth.z - lhs.originRotationDepth.z);
 		}
 		
@@ -83,6 +104,9 @@ public class SpriteBatch
 	private final static int initialQueueSize = 64;
 	private final static int verticesPerSprite = 4;
 	private final static int indicesPerSprite = 6;
+	
+	// vector2 for corner offsets
+	private final Vec2[] cornerOffsets;
 	
 	// temp spriteinfo variable
 	private final static SpriteInfo tempSprite = new SpriteInfo();
@@ -144,11 +168,22 @@ public class SpriteBatch
 		
 		// create the sprite queue
 		spriteInfoQueue = new SpriteInfo[initialQueueSize];
+		for(int i = 0; i < initialQueueSize; i++)
+		{
+			spriteInfoQueue[i] = new SpriteInfo();
+		}
+		
 		spriteQueueArraySize = initialQueueSize;
 		spriteQueueCount = 0;
 		beginEndPair = false;
-		
 		spriteSortMode = SpriteSortMode.DEFERRED;
+		
+		// create corner offsets
+		cornerOffsets = new Vec2[4];
+		cornerOffsets[0] = new Vec2(0, 0);
+		cornerOffsets[1] = new Vec2(0, 1);
+		cornerOffsets[2] = new Vec2(1, 1);
+		cornerOffsets[3] = new Vec2(1, 0);
 	}
 
 	/**
@@ -156,7 +191,6 @@ public class SpriteBatch
 	 */
 	public void Dispose()
 	{
-		spriteBatchProgram.Dispose();
 		vertexBuffer.Dispose();
 		indexBuffer.Dispose();
 	}
@@ -177,7 +211,7 @@ public class SpriteBatch
 			indices[startOffset++] = (short) (i + 1);
 			indices[startOffset++] = (short) (i + 2);
 			
-			indices[startOffset++] = (short) i;
+			indices[startOffset++] = i;
 			indices[startOffset++] = (short) (i + 2);
 			indices[startOffset++] = (short) (i + 3);
 			
@@ -239,7 +273,7 @@ public class SpriteBatch
 	 */
 	private void DrawSprite(Texture2D texture, Rect destination, Rect sourceRect, Color color, Vec4 originDepthRotation)
 	{
-		// error chec
+		// error check
 		if(texture == null)
 			return;
 		
@@ -256,7 +290,7 @@ public class SpriteBatch
 		SpriteInfo spriteInfo = spriteInfoQueue[spriteQueueCount];
 		
 		if(spriteInfo == null)
-			Log.d(LOG_TAG, "SpriteInfo is null" );
+			Log.d(LOG_TAG, "SpriteInfo is null i: " + spriteQueueCount );
 		
 		// store spriteInfo parameters
 		spriteInfo.destination = destination;
@@ -462,6 +496,23 @@ public class SpriteBatch
 			 
 		}
 		
-		// put into vertexbuffer
+		// put all vertice attributes in the buffer
+		for(int i = 0; i < verticesPerSprite; i++)
+		{
+			// create vertex
+			SpriteInfo.attributes[0] = cornerOffsets[i].x;
+			SpriteInfo.attributes[1] = cornerOffsets[i].y;
+			
+			SpriteInfo.attributes[2] = 1.0f;
+			SpriteInfo.attributes[3] = 1.0f;
+			SpriteInfo.attributes[4] = 1.0f;
+			SpriteInfo.attributes[5] = 1.0f;
+			
+			SpriteInfo.attributes[6] = cornerOffsets[i].x;
+			SpriteInfo.attributes[7] = cornerOffsets[i].y;
+		
+			// put into vertexbuffer
+			vertexBuffer.SetData(vertBuffOffset * VERTEX_ELEMENTS + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
+		}
 	}
 }
