@@ -14,8 +14,7 @@ import android.graphics.Rect;
  */
 public class SpriteInfo
 {
-	@SuppressWarnings("unused")
-	public static final float[] attributes = new float[8];
+	public static final float[] attributes = new float[9];
 	
 	public Rect source;
 	public Rect destination;

@@ -32,6 +32,7 @@ public class VertexBuffer implements IDisposable
 	private final boolean isStatic;
 	private final int usage;
 	private int bufferHandle;
+	private int bufferSize;
 	
 	/**
 	 * Constructor
@@ -41,7 +42,8 @@ public class VertexBuffer implements IDisposable
 		// set members
 		this.isStatic = isStatic;
 		this.usage = this.isStatic ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-		bufferHandle = 0;
+		this.bufferHandle = 0;
+		this.bufferSize = 0;
 		
 		// create the float buffer
 		vertexBuffer = ByteBuffer
@@ -70,7 +72,7 @@ public class VertexBuffer implements IDisposable
 			if(usage == GL_DYNAMIC_DRAW)
 			{
 				glBufferData(GL_ARRAY_BUFFER, vertexBuffer.capacity() * BYTES_PER_FLOAT,
-						vertexBuffer, this.usage);
+						null, this.usage);
 				
 				int error = glGetError();
 				if(error != GL_NO_ERROR)
@@ -78,8 +80,6 @@ public class VertexBuffer implements IDisposable
 					String msg = GLUtils.getEGLErrorString(error);
 					Log.d(LOG_TAG, msg);
 				}
-				else
-					Log.d(LOG_TAG, "No GL error");
 			}
 			
 			return true;
@@ -94,13 +94,15 @@ public class VertexBuffer implements IDisposable
 	 */
 	public void SetData(int bufferOffset, float[] vertexData, int offset, int length)
 	{
-		if( bufferOffset + (length - offset) > vertexBuffer.limit())
+		int endOffset = bufferOffset + (length - offset);
+		if(endOffset  > vertexBuffer.limit())
 		{
 			Log.d(LOG_TAG, "Size to write is to big for the vertexBuffer");
 			return;
 		}
-		
+				
 		// create the float buffer
+		bufferSize += length;
 		vertexBuffer.position(bufferOffset);
 		vertexBuffer.put(vertexData, offset, length);
 	}
@@ -114,12 +116,13 @@ public class VertexBuffer implements IDisposable
 		vertexBuffer.position(0);
 		
 		if(usage == GL_STATIC_DRAW)
-			glBufferData(GL_ARRAY_BUFFER, vertexBuffer.limit() * BYTES_PER_FLOAT,
+			glBufferData(GL_ARRAY_BUFFER, bufferSize * BYTES_PER_FLOAT,
 					this.vertexBuffer, this.usage);
 		else
-			glBufferSubData(GL_ARRAY_BUFFER, 0, vertexBuffer.limit() * BYTES_PER_FLOAT, vertexBuffer);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, bufferSize * BYTES_PER_FLOAT, vertexBuffer);
 		
 		vertexBuffer.clear();
+		bufferSize = 0;
 		
 		// error check
 		int error = glGetError();
@@ -171,5 +174,7 @@ public class VertexBuffer implements IDisposable
 			tempHandle.clear();
 			bufferHandle = 0;
 		}
+		
+		vertexBuffer.clear();
 	}
 }

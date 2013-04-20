@@ -96,8 +96,6 @@ public class Texture2D implements IDisposable, Comparable<Texture2D>
 				String msg = GLUtils.getEGLErrorString(error);
 				Log.d(LOG_TAG, msg);
 			}
-			else
-				Log.d(LOG_TAG, "No GL error");
 			
 			return true;
 		}

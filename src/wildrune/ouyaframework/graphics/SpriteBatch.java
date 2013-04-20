@@ -61,12 +61,12 @@ public class SpriteBatch
 		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
 		{
 			if(lhs == null)
-				return 1;
-			
-			if(rhs == null)
 				return -1;
 			
-			return (int) (lhs.originRotationDepth.z - rhs.originRotationDepth.z);
+			if(rhs == null)
+				return 1;
+			
+			return (int) (lhs.originRotationDepth.w - rhs.originRotationDepth.w);
 		}
 		
 	}
@@ -80,12 +80,12 @@ public class SpriteBatch
 		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
 		{
 			if(lhs == null)
-				return -1;
-			
-			if(rhs == null)
 				return 1;
 			
-			return (int) (rhs.originRotationDepth.z - lhs.originRotationDepth.z);
+			if(rhs == null)
+				return -1;
+			
+			return (int) (rhs.originRotationDepth.w - lhs.originRotationDepth.w);
 		}
 		
 	}
@@ -93,11 +93,11 @@ public class SpriteBatch
 	// static constants
 	private final static String LOG_TAG = "Spritebatch";
 	
-	private final static int BYTES_PER_FLOAT = 4;
-	private final static int POSITION_ELEMENT_COUNT = 2;
+	private final static int POSITION_ELEMENT_COUNT = 3;
 	private final static int COLOR_ELEMENT_COUNT = 4;
 	private final static int UV_ELEMENT_COUNT = 2;
 	private final static int VERTEX_ELEMENTS = POSITION_ELEMENT_COUNT + COLOR_ELEMENT_COUNT + UV_ELEMENT_COUNT;
+	private final static int BYTES_PER_FLOAT = 4;
 	
 	// batch data
 	private final static int maxBatchSize = 1024;
@@ -107,9 +107,6 @@ public class SpriteBatch
 	
 	// vector2 for corner offsets
 	private final Vec2[] cornerOffsets;
-	
-	// temp spriteinfo variable
-	private final static SpriteInfo tempSprite = new SpriteInfo();
 	
 	// comparators
 	private final TextureComp TexComp = new TextureComp();
@@ -208,12 +205,12 @@ public class SpriteBatch
 		for(short i = 0; i < maxBatchSize * verticesPerSprite; i += verticesPerSprite)
 		{
 			indices[startOffset++] = i;
-			indices[startOffset++] = (short) (i + 1);
 			indices[startOffset++] = (short) (i + 2);
+			indices[startOffset++] = (short) (i + 1);
 			
 			indices[startOffset++] = i;
-			indices[startOffset++] = (short) (i + 2);
 			indices[startOffset++] = (short) (i + 3);
+			indices[startOffset++] = (short) (i + 2);
 			
 		}
 		
@@ -271,7 +268,12 @@ public class SpriteBatch
 	/**
 	 * Draws a sprite
 	 */
-	private void DrawSprite(Texture2D texture, Rect destination, Rect sourceRect, Color color, Vec4 originDepthRotation)
+	private void DrawSprite(Texture2D texture, 
+			float destLeft, float destTop, float destRight, float destBottom,
+			float sourceLeft, float sourceTop, float sourceRight, float sourceBottom,
+			float r, float g, float b, float a,
+			float originX, float originY,
+			float depth, float rotation )
 	{
 		// error check
 		if(texture == null)
@@ -292,35 +294,38 @@ public class SpriteBatch
 		if(spriteInfo == null)
 			Log.d(LOG_TAG, "SpriteInfo is null i: " + spriteQueueCount );
 		
-		// store spriteInfo parameters
-		spriteInfo.destination = destination;
-		spriteInfo.color = color;
-		spriteInfo.originRotationDepth = originDepthRotation;
+		// set destionation
+		spriteInfo.destination.left = (int) destLeft;
+		spriteInfo.destination.top = (int) destTop;
+		spriteInfo.destination.right = (int) destRight;
+		spriteInfo.destination.bottom = (int) destBottom;
+		
+		// set color
+		spriteInfo.color.r = r;
+		spriteInfo.color.g = g;
+		spriteInfo.color.b = b;
+		spriteInfo.color.a = a;
+		
+		// set origin, rotation and depth
+		spriteInfo.originRotationDepth.x = originX;
+		spriteInfo.originRotationDepth.y = originY;
+		spriteInfo.originRotationDepth.z = rotation;
+		spriteInfo.originRotationDepth.w = depth;
+		
+		// set texture
 		spriteInfo.texture = texture;
 		
-		if(sourceRect != null)
-		{
-			// set the spriteInfo source rect
-			spriteInfo.source.left = sourceRect.left / texture.width;
-			spriteInfo.source.top = sourceRect.top / texture.height;
-			spriteInfo.source.right = sourceRect.right / texture.width;
-			spriteInfo.source.bottom = sourceRect.bottom / texture.height;
-		}
-		else
-		{
-			// set the spriteInfo source rect to use the whole texture
-			spriteInfo.source.left = 0;
-			spriteInfo.source.top = 0;
-			spriteInfo.source.right = 1;
-			spriteInfo.source.bottom = 1;
-		}
+		// set the spriteInfo source rect
+		spriteInfo.source.left = (int) (sourceLeft / texture.width);
+		spriteInfo.source.top = (int) (sourceTop / texture.height);
+		spriteInfo.source.right = (int) (sourceRight / texture.width);
+		spriteInfo.source.bottom = (int) (sourceBottom / texture.height);
 		
 		// check sort mode and react upon
 		if(spriteSortMode == SpriteSortMode.IMMEDIATE)
 			// draw the texture directly
 			RenderBatch(texture, spriteQueueCount, 1);
-		else
-			// Queue this sprite for later sorting and batched rendering
+		else // Queue this sprite for later sorting and batched rendering
 			spriteQueueCount++;
 	}
 	
@@ -330,16 +335,44 @@ public class SpriteBatch
 	 * @param position
 	 */
 	public void DrawSprite(Texture2D texture, Vec2 position)
-	{
-		// set destination
-		tempSprite.destination.left = (int)position.x;
-		tempSprite.destination.top = (int)position.y;
-		tempSprite.destination.right = texture.width;
-		tempSprite.destination.bottom = texture.height;
-		
+	{	
 		// "draw" the sprite
-		DrawSprite(texture, tempSprite.destination, tempSprite.source, 
-				Color.WHITE, tempSprite.originRotationDepth);
+		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
+				0, 0, 1, 1,
+				1, 1, 1, 1,
+				0, 0, 0, 0);
+	}
+	
+	/**
+	 * Draw sprite with color
+	 * @param texture
+	 * @param position
+	 * @param color
+	 */
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color)
+	{
+		// "draw" the sprite
+		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
+				0, 0, 1, 1,
+				color.r, color.g, color.b, color.a,
+				0, 0, 0, 0);
+	}
+	
+	/**
+	 * Draw sprite with color, rotation and depth
+	 * @param texture
+	 * @param position
+	 * @param color
+	 * @param rotation
+	 * @param depth
+	 */
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, float rotation, float depth)
+	{
+		// "draw" the sprite
+		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
+				0, 0, 1, 1,
+				color.r, color.g, color.b, color.a,
+				0, 0, rotation, depth);
 	}
 	
 	/**
@@ -360,7 +393,14 @@ public class SpriteBatch
 		// copy old data over
 		for(int i = 0; i < this.spriteQueueCount; i++)
 		{
-			newQueue[i] = this.spriteInfoQueue[i]; 
+			newQueue[i] = this.spriteInfoQueue[i];
+		}
+		
+		// initialize new spriteinfo if needed
+		for(int i = this.spriteQueueCount; i < newSize; i++)
+		{
+			// init new sprite info
+			newQueue[i] = new SpriteInfo();
 		}
 		
 		this.spriteInfoQueue = newQueue;
@@ -399,9 +439,10 @@ public class SpriteBatch
 		
 		// set the vertex buffer and attribute pointers
 		vertexBuffer.Bind();
-		vertexBuffer.SetVertexAttribPointer(0, aPosition, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
-		vertexBuffer.SetVertexAttribPointer(2 * BYTES_PER_FLOAT, aColor, 4, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
-		vertexBuffer.SetVertexAttribPointer(6 * BYTES_PER_FLOAT, aTexCoord, 2, VERTEX_ELEMENTS * BYTES_PER_FLOAT);
+		int bytesPerVertex = VERTEX_ELEMENTS * BYTES_PER_FLOAT;
+		vertexBuffer.SetVertexAttribPointer(0 * BYTES_PER_FLOAT, aPosition, 3, bytesPerVertex);
+		vertexBuffer.SetVertexAttribPointer(3 * BYTES_PER_FLOAT, aColor, 4, bytesPerVertex);
+		vertexBuffer.SetVertexAttribPointer(7 * BYTES_PER_FLOAT, aTexCoord, 2, bytesPerVertex);
 		
 		// set indexbuffer
 		indexBuffer.Bind();
@@ -416,7 +457,7 @@ public class SpriteBatch
 			return;
 		
 		// sort the sprites
-		SortSprites();
+		//SortSprites();
 		
 		// used vars
 		Texture2D batchTexture = null;
@@ -427,6 +468,9 @@ public class SpriteBatch
 		{
 			Texture2D spriteTexture = spriteInfoQueue[pos].texture;
 			
+			if(spriteTexture == null)
+				Log.d(LOG_TAG, "Texture is null" );
+			
 			// compare textures
 			if(spriteTexture.compareTo(batchTexture) != 0)
 			{
@@ -436,7 +480,7 @@ public class SpriteBatch
 				}
 				
 				batchTexture = spriteTexture;
-				batchStart += pos;
+				batchStart = pos;
 			}
 		}
 		
@@ -457,6 +501,7 @@ public class SpriteBatch
 	{
 		// bind the texture
 		tex.Bind(0);
+		int spriteCount = count;
 		
 		// iterate all sprites
 		while(count > 0)
@@ -469,7 +514,7 @@ public class SpriteBatch
 			// generate sprite vertex data
 			for(int i = 0; i < batchSize; i++)
 			{
-				RenderSprite(spriteInfoQueue[ spriteBatchStart + i], verticesPerSprite * i );
+				RenderSprite(spriteInfoQueue[ spriteBatchStart + i], verticesPerSprite * VERTEX_ELEMENTS * i );
 			}
 			
 			count -= batchSize;
@@ -478,7 +523,7 @@ public class SpriteBatch
 		
 		// draw the sprites
 		vertexBuffer.Apply();
-		glDrawElements(GL_TRIANGLES, count * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
+		glDrawElements(GL_TRIANGLES, spriteCount * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
 	}
 	
 	/**
@@ -487,32 +532,25 @@ public class SpriteBatch
 	 * @param sprite
 	 */
 	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
-	{
-		float rotation = sprite.originRotationDepth.z;
-			
-		// setup vertex attributes
-		if(rotation != 0)
-		{
-			 
-		}
-		
-		// put all vertice attributes in the buffer
+	{		
+		// put all vertices attributes in the buffer
 		for(int i = 0; i < verticesPerSprite; i++)
 		{
 			// create vertex
-			SpriteInfo.attributes[0] = cornerOffsets[i].x;
-			SpriteInfo.attributes[1] = cornerOffsets[i].y;
+			SpriteInfo.attributes[0] = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
+			SpriteInfo.attributes[1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
+			SpriteInfo.attributes[2] = sprite.originRotationDepth.w;
 			
-			SpriteInfo.attributes[2] = 1.0f;
-			SpriteInfo.attributes[3] = 1.0f;
-			SpriteInfo.attributes[4] = 1.0f;
-			SpriteInfo.attributes[5] = 1.0f;
+			SpriteInfo.attributes[3] = sprite.color.r;
+			SpriteInfo.attributes[4] = sprite.color.g;
+			SpriteInfo.attributes[5] = sprite.color.b;
+			SpriteInfo.attributes[6] = sprite.color.a;
 			
-			SpriteInfo.attributes[6] = cornerOffsets[i].x;
-			SpriteInfo.attributes[7] = cornerOffsets[i].y;
+			SpriteInfo.attributes[7] = cornerOffsets[i].x;
+			SpriteInfo.attributes[8] = cornerOffsets[i].y;
 		
 			// put into vertexbuffer
-			vertexBuffer.SetData(vertBuffOffset * VERTEX_ELEMENTS + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
+			vertexBuffer.SetData(vertBuffOffset + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
 		}
 	}
 }

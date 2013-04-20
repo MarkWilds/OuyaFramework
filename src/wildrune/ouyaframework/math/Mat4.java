@@ -338,7 +338,7 @@ public class Mat4
 	public static Mat4 CreateOrtho2D(int width, int height)
 	{
 		Mat4 result = RuneMath.GetMat4();
-		Matrix.orthoM(result.elements, 0, 0, width, 0, height, -1.0f, 1.0f);
+		Matrix.orthoM(result.elements, 0, 0, width, height, 0, -1.0f, 1.0f);
 		return result;
 	}
 }

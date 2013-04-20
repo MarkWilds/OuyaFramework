@@ -26,6 +26,7 @@ public class IndexBuffer implements IDisposable
 	private final boolean isStatic;
 	private final int usage;
 	private int bufferHandle;
+	private int bufferSize;
 	
 	/**
 	 * Constructor
@@ -35,7 +36,8 @@ public class IndexBuffer implements IDisposable
 		// set members
 		this.isStatic = isStatic;
 		this.usage = this.isStatic ? GL_STATIC_DRAW : GL_DYNAMIC_DRAW;
-		bufferHandle = 0;
+		this.bufferHandle = 0;
+		this.bufferSize = 0;
 		
 		// create the float buffer
 		indexBuffer = ByteBuffer
@@ -78,13 +80,15 @@ public class IndexBuffer implements IDisposable
 	 */
 	public void SetData(int bufferOffset, short[] indexData, int offset, int length)
 	{
-		if( bufferOffset + (length - offset) > indexBuffer.limit())
+		int endOffset = bufferOffset + (length - offset);
+		if( endOffset > indexBuffer.limit())
 		{
 			Log.d(LOG_TAG, "Size to write is to big for the indexBuffer");
 			return;
 		}
 		
 		// create the short buffer
+		bufferSize += length;
 		indexBuffer.position(bufferOffset);
 		indexBuffer.put(indexData, offset, length);
 	}
@@ -98,12 +102,13 @@ public class IndexBuffer implements IDisposable
 		indexBuffer.position(0);
 		
 		if(usage == GL_STATIC_DRAW)
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.limit() * BYTES_PER_SHORT,
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, bufferSize * BYTES_PER_SHORT,
 					this.indexBuffer, this.usage);
 		else
-			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexBuffer.limit() * BYTES_PER_SHORT, indexBuffer);
+			glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, bufferSize * BYTES_PER_SHORT, indexBuffer);
 		
 		indexBuffer.clear();
+		bufferSize = 0;
 		
 		// error check
 		int error = glGetError();
@@ -144,5 +149,7 @@ public class IndexBuffer implements IDisposable
 			tempHandle.clear();
 			bufferHandle = 0;
 		}
+		
+		indexBuffer.clear();
 	}
 }
