@@ -106,7 +106,7 @@ public class SpriteBatch
 	private final static int indicesPerSprite = 6;
 	
 	// vector2 for corner offsets
-	private final Vec2[] cornerOffsets;
+	private static final Vec2[] cornerOffsets;
 	
 	// comparators
 	private final TextureComp TexComp = new TextureComp();
@@ -137,6 +137,17 @@ public class SpriteBatch
 	int aColor;
 	int aTexCoord;
 	int uTexOne;
+	
+	// initialize static fields
+	static
+	{
+		// create corner offsets
+		cornerOffsets = new Vec2[4];
+		cornerOffsets[0] = new Vec2(0, 0);
+		cornerOffsets[1] = new Vec2(0, 1);
+		cornerOffsets[2] = new Vec2(1, 1);
+		cornerOffsets[3] = new Vec2(1, 0);
+	}
 	
 	/**
 	 * Constructors
@@ -190,6 +201,7 @@ public class SpriteBatch
 	{
 		vertexBuffer.Dispose();
 		indexBuffer.Dispose();
+		spriteInfoQueue = null;
 	}
 	
 	/**
@@ -245,6 +257,14 @@ public class SpriteBatch
 	}
 	
 	/**
+	 * Start the spritebatch drawing
+	 */
+	public void Begin()
+	{
+		this.Begin(this.spriteSortMode);
+	}
+	
+	/**
 	 * End spritebatch drawing
 	 */
 	public void End()
@@ -290,9 +310,6 @@ public class SpriteBatch
 		
 		// get spriteInfo reference
 		SpriteInfo spriteInfo = spriteInfoQueue[spriteQueueCount];
-		
-		if(spriteInfo == null)
-			Log.d(LOG_TAG, "SpriteInfo is null i: " + spriteQueueCount );
 		
 		// set destionation
 		spriteInfo.destination.left = (int) destLeft;
@@ -366,13 +383,13 @@ public class SpriteBatch
 	 * @param rotation
 	 * @param depth
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Color color, float rotation, float depth)
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, float rotation)
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
 				0, 0, 1, 1,
 				color.r, color.g, color.b, color.a,
-				0, 0, rotation, depth);
+				0, 0, rotation, 0);
 	}
 	
 	/**
