@@ -100,7 +100,7 @@ public class SpriteBatch
 	private final static int BYTES_PER_FLOAT = 4;
 	
 	// batch data
-	private final static int maxBatchSize = 1024;
+	private final static int maxBatchSize = 2048;
 	private final static int initialQueueSize = 64;
 	private final static int verticesPerSprite = 4;
 	private final static int indicesPerSprite = 6;
@@ -426,7 +426,6 @@ public class SpriteBatch
 		}
 	}
 	
-	// RENDER METHODS
 	/**
 	 * Set states, bind resources
 	 */
@@ -468,12 +467,10 @@ public class SpriteBatch
 		{
 			Texture2D spriteTexture = spriteInfoQueue[pos].texture;
 			
-			if(spriteTexture == null)
-				Log.d(LOG_TAG, "Texture is null" );
-			
-			// compare textures
+			// if the textures are not the same we will draw a batch
 			if(spriteTexture.compareTo(batchTexture) != 0)
 			{
+				// only if the pos is higher than batch start we will draw
 				if(pos > batchStart)
 				{
 					RenderBatch(batchTexture, batchStart, pos - batchStart);
@@ -487,15 +484,15 @@ public class SpriteBatch
 		// render final batch
 		RenderBatch(batchTexture, batchStart, spriteQueueCount - batchStart);
 		
-		// clear data
+		// reset queue
 		spriteQueueCount = 0;
 	}
 	
 	/**
 	 * Render a batch
-	 * @param tex
-	 * @param spriteBatchStart
-	 * @param count
+	 * @param tex the texture to batch with
+	 * @param spriteBatchStart where to start batching from
+	 * @param count the amount of sprites to draw
 	 */
 	private void RenderBatch(Texture2D tex, int spriteBatchStart, int count)
 	{
@@ -521,18 +518,23 @@ public class SpriteBatch
 			spriteBatchStart += batchSize;
 		}
 		
-		// draw the sprites
+		// upload data to the GPU
 		vertexBuffer.Apply();
+		
+		// draw the sprites
 		glDrawElements(GL_TRIANGLES, spriteCount * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
 	}
 	
 	/**
 	 * Generate the vertex attributes from sprite data
 	 * and put these in the vertexbuffer
-	 * @param sprite
+	 * @param sprite the sprite to add to the vertexbuffer
+	 * @param vertBuffOffset where to start putting the data in the vertexbuffer
 	 */
 	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
 	{		
+		// rotate sprite
+		
 		// put all vertices attributes in the buffer
 		for(int i = 0; i < verticesPerSprite; i++)
 		{

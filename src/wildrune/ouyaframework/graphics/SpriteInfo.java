@@ -2,8 +2,6 @@ package wildrune.ouyaframework.graphics;
 
 import wildrune.ouyaframework.graphics.basic.Color;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
-import wildrune.ouyaframework.math.RuneMath;
-import wildrune.ouyaframework.math.Vec2;
 import wildrune.ouyaframework.math.Vec4;
 import android.graphics.Rect;
 
@@ -14,8 +12,10 @@ import android.graphics.Rect;
  */
 public class SpriteInfo
 {
+	// this is used for putting the vertex attributes in the buffer
 	public static final float[] attributes = new float[9];
 	
+	// sprite info
 	public Rect source;
 	public Rect destination;
 	public Texture2D texture;
@@ -41,29 +41,5 @@ public class SpriteInfo
 		this.destination = dest;
 		this.color = color;
 		this.originRotationDepth = ord;
-	}
-	
-	/**
-	 * Encodes the values into a vector4
-	 */
-	public static Vec4 ToOriginRotDepth(Vec2 origin, float rot, float depth)
-	{
-		return ToOriginRotDepth(origin.x, origin.y, rot, depth);
-	}
-	
-	/**
-	 * Encodes the values into a vector4
-	 */
-	public static Vec4 ToOriginRotDepth(float oX, float oY, float rot, float depth)
-	{
-		Vec4 encodedVec = RuneMath.GetVec4();
-		
-		// set values
-		encodedVec.x = oX;
-		encodedVec.y = oY;
-		encodedVec.z = rot;
-		encodedVec.w = depth;
-		
-		return encodedVec;
 	}
 }

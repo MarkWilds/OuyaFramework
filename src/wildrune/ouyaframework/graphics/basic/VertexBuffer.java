@@ -104,6 +104,8 @@ public class VertexBuffer implements IDisposable
 		// create the float buffer
 		bufferSize += length;
 		vertexBuffer.position(bufferOffset);
+		
+		// Optimize with JNI
 		vertexBuffer.put(vertexData, offset, length);
 	}
 	
