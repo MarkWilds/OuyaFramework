@@ -120,6 +120,9 @@ public class SpriteBatch
 	private SpriteSortMode  spriteSortMode;
 	private boolean			beginEndPair;
 	
+	private float[] intermBuffer;
+	private int		intermCount;
+	
 	// blendstate
 	// samplerstate
 	// depthstencilstate
@@ -186,12 +189,9 @@ public class SpriteBatch
 		beginEndPair = false;
 		spriteSortMode = SpriteSortMode.DEFERRED;
 		
-		// create corner offsets
-		cornerOffsets = new Vec2[4];
-		cornerOffsets[0] = new Vec2(0, 0);
-		cornerOffsets[1] = new Vec2(0, 1);
-		cornerOffsets[2] = new Vec2(1, 1);
-		cornerOffsets[3] = new Vec2(1, 0);
+		// optimizations
+		intermBuffer = new float[verticesPerSprite * VERTEX_ELEMENTS * spriteQueueArraySize];
+		intermCount = 0;
 	}
 
 	/**
@@ -306,6 +306,7 @@ public class SpriteBatch
 		if(spriteQueueCount >= spriteQueueArraySize)
 		{
 			GrowSpriteQueue();
+			GrowIntermBuffer();
 		}
 		
 		// get spriteInfo reference
@@ -425,6 +426,23 @@ public class SpriteBatch
 	}
 	
 	/**
+	 * Grows the intermediate buffe when needed
+	 */
+	private void GrowIntermBuffer()
+	{
+		int newSize = this.spriteQueueArraySize * 2;
+		float[] newBuffer = new float[newSize * verticesPerSprite * VERTEX_ELEMENTS];
+		
+		// copy old data over
+		for(int i = 0; i < this.intermCount; i++)
+		{
+			newBuffer[i] = this.intermBuffer[i];
+		}
+		
+		this.intermBuffer = newBuffer;
+	}
+	
+	/**
 	 * Sort the queue based on the sprite sort mode
 	 */
 	private void SortSprites() 
@@ -536,7 +554,9 @@ public class SpriteBatch
 		}
 		
 		// upload data to the GPU
+		vertexBuffer.SetData(0, intermBuffer, 0, intermCount);
 		vertexBuffer.Apply();
+		intermCount = 0;
 		
 		// draw the sprites
 		glDrawElements(GL_TRIANGLES, spriteCount * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
@@ -553,8 +573,10 @@ public class SpriteBatch
 		// rotate sprite
 		
 		// put all vertices attributes in the buffer
+		
 		for(int i = 0; i < verticesPerSprite; i++)
 		{
+			/*
 			// create vertex
 			SpriteInfo.attributes[0] = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
 			SpriteInfo.attributes[1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
@@ -567,9 +589,25 @@ public class SpriteBatch
 			
 			SpriteInfo.attributes[7] = cornerOffsets[i].x;
 			SpriteInfo.attributes[8] = cornerOffsets[i].y;
+			*/
+			
+			int offset = vertBuffOffset + VERTEX_ELEMENTS * i;
+			intermBuffer[offset] 	 = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
+			intermBuffer[offset + 1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
+			intermBuffer[offset + 2] = sprite.originRotationDepth.w;
+
+			intermBuffer[offset + 3] = sprite.color.r;
+			intermBuffer[offset + 4] = sprite.color.g;
+			intermBuffer[offset + 5] = sprite.color.b;
+			intermBuffer[offset + 6] = sprite.color.a;
+			
+			intermBuffer[offset + 7] = cornerOffsets[i].x;
+			intermBuffer[offset + 8] = cornerOffsets[i].y;
+			
+			intermCount += VERTEX_ELEMENTS; 
 		
 			// put into vertexbuffer
-			vertexBuffer.SetData(vertBuffOffset + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
+			//vertexBuffer.SetData(vertBuffOffset + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
 		}
 	}
 }
