@@ -450,13 +450,13 @@ public class SpriteBatch
 		switch(spriteSortMode)
 		{
 			case TEXTURE:
-				Arrays.sort(spriteInfoQueue, this.TexComp);
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.TexComp);
 				break;
 			case BACKTOFRONT:
-				Arrays.sort(spriteInfoQueue, this.BackFrontComp);
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.BackFrontComp);
 				break;
 			case FRONTTOBACK:
-				Arrays.sort(spriteInfoQueue, this.FrontBackComp);
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.FrontBackComp);
 				break;
 		}
 	}
@@ -491,16 +491,18 @@ public class SpriteBatch
 			return;
 		
 		// sort the sprites
-		//SortSprites();
+		SortSprites();
 		
 		// used vars
 		Texture2D batchTexture = null;
+		Texture2D spriteTexture = null;
+		SpriteInfo[] localSpriteQueue = spriteInfoQueue;
 		int batchStart = 0;
 		
 		// iterate all sprites
 		for(int pos = 0; pos < spriteQueueCount; pos++)
 		{
-			Texture2D spriteTexture = spriteInfoQueue[pos].texture;
+			spriteTexture = localSpriteQueue[pos].texture;
 			
 			// if the textures are not the same we will draw a batch
 			if(spriteTexture.compareTo(batchTexture) != 0)
@@ -573,24 +575,8 @@ public class SpriteBatch
 		// rotate sprite
 		
 		// put all vertices attributes in the buffer
-		
 		for(int i = 0; i < verticesPerSprite; i++)
 		{
-			/*
-			// create vertex
-			SpriteInfo.attributes[0] = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
-			SpriteInfo.attributes[1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
-			SpriteInfo.attributes[2] = sprite.originRotationDepth.w;
-			
-			SpriteInfo.attributes[3] = sprite.color.r;
-			SpriteInfo.attributes[4] = sprite.color.g;
-			SpriteInfo.attributes[5] = sprite.color.b;
-			SpriteInfo.attributes[6] = sprite.color.a;
-			
-			SpriteInfo.attributes[7] = cornerOffsets[i].x;
-			SpriteInfo.attributes[8] = cornerOffsets[i].y;
-			*/
-			
 			int offset = vertBuffOffset + VERTEX_ELEMENTS * i;
 			intermBuffer[offset] 	 = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
 			intermBuffer[offset + 1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
@@ -605,9 +591,6 @@ public class SpriteBatch
 			intermBuffer[offset + 8] = cornerOffsets[i].y;
 			
 			intermCount += VERTEX_ELEMENTS; 
-		
-			// put into vertexbuffer
-			//vertexBuffer.SetData(vertBuffOffset + VERTEX_ELEMENTS * i, SpriteInfo.attributes, 0, VERTEX_ELEMENTS);
 		}
 	}
 }

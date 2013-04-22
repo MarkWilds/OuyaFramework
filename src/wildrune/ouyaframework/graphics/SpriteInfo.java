@@ -12,9 +12,6 @@ import android.graphics.Rect;
  */
 public class SpriteInfo
 {
-	// this is used for putting the vertex attributes in the buffer
-	public static final float[] attributes = new float[9];
-	
 	// sprite info
 	public Rect source;
 	public Rect destination;
