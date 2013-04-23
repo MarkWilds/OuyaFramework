@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.util;
+package wildrune.ouyaframework.graphics.utils;
 
 import java.nio.Buffer;
 import java.nio.ByteBuffer;

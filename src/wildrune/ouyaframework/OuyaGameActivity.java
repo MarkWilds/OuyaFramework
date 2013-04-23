@@ -6,6 +6,7 @@ import javax.microedition.khronos.opengles.GL10;
 import tv.ouya.console.api.OuyaController;
 
 import wildrune.ouyaframework.graphics.Graphics;
+import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
 import wildrune.ouyaframework.system.Clock;
 import wildrune.ouyaframework.system.FileIO;
 

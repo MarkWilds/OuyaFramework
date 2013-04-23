@@ -10,7 +10,7 @@ import java.nio.IntBuffer;
 import android.opengl.GLUtils;
 import android.util.Log;
 
-import wildrune.ouyaframework.util.BufferUtils;
+import wildrune.ouyaframework.graphics.utils.BufferUtils;
 import wildrune.ouyaframework.util.interfaces.IDisposable;
 
 /**

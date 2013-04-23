@@ -7,7 +7,7 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
-import wildrune.ouyaframework.util.BufferUtils;
+import wildrune.ouyaframework.graphics.utils.BufferUtils;
 import wildrune.ouyaframework.util.interfaces.IDisposable;
 import android.opengl.GLUtils;
 import android.util.Log;

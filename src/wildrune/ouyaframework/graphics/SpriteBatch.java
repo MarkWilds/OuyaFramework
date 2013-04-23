@@ -18,78 +18,6 @@ import android.util.Log;
  */
 public class SpriteBatch 
 {
-	public enum SpriteEffect
-	{
-		NONE,
-		HORIZONTAL_FLIP,
-		VERTICAL_FLIP
-	}
-	
-	public enum SpriteSortMode
-	{
-		DEFERRED,
-		IMMEDIATE,
-		TEXTURE,
-		BACKTOFRONT,
-		FRONTTOBACK
-	}
-	
-	/**
-	 * Texture comparator
-	 */
-	private class TextureComp implements Comparator<SpriteInfo>
-	{
-		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs)
-		{
-			if(lhs == null || lhs.texture == null)
-				return 1;
-			
-			if(rhs == null || rhs.texture == null)
-				return -1;
-			
-			return lhs.texture.textureHandle - rhs.texture.textureHandle;
-		}
-	}
-	
-	/**
-	 * BackToFront comparator
-	 */
-	private class BackToFrontComp implements Comparator<SpriteInfo>
-	{
-		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
-		{
-			if(lhs == null)
-				return -1;
-			
-			if(rhs == null)
-				return 1;
-			
-			return (int) (lhs.originRotationDepth.w - rhs.originRotationDepth.w);
-		}
-		
-	}
-	
-	/**
-	 * FrontToBack comparator
-	 */
-	private class FrontToBackComp implements Comparator<SpriteInfo>
-	{
-		@Override
-		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
-		{
-			if(lhs == null)
-				return 1;
-			
-			if(rhs == null)
-				return -1;
-			
-			return (int) (rhs.originRotationDepth.w - lhs.originRotationDepth.w);
-		}
-		
-	}
-	
 	// static constants
 	private final static String LOG_TAG = "Spritebatch";
 	
@@ -107,6 +35,24 @@ public class SpriteBatch
 	
 	// vector2 for corner offsets
 	private static final Vec2[] cornerOffsets;
+	
+	// Allows the sprite to be rendered flipped
+	public enum SpriteEffect
+	{
+		NONE,
+		HORIZONTAL_FLIP,
+		VERTICAL_FLIP
+	}
+	
+	// sprites can be sorted in different ways
+	public enum SpriteSortMode
+	{
+		DEFERRED,
+		IMMEDIATE,
+		TEXTURE,
+		BACKTOFRONT,
+		FRONTTOBACK
+	}
 	
 	// comparators
 	private final TextureComp TexComp = new TextureComp();
@@ -591,6 +537,98 @@ public class SpriteBatch
 			intermBuffer[offset + 8] = cornerOffsets[i].y;
 			
 			intermCount += VERTEX_ELEMENTS; 
+		}
+	}
+	
+	/**
+	 * Texture comparator
+	 */
+	private class TextureComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs)
+		{
+			if(lhs == null || lhs.texture == null)
+				return 1;
+			
+			if(rhs == null || rhs.texture == null)
+				return -1;
+			
+			return lhs.texture.textureHandle - rhs.texture.textureHandle;
+		}
+	}
+	
+	/**
+	 * BackToFront comparator
+	 */
+	private class BackToFrontComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
+		{
+			if(lhs == null)
+				return -1;
+			
+			if(rhs == null)
+				return 1;
+			
+			return (int) (lhs.originRotationDepth.w - rhs.originRotationDepth.w);
+		}
+		
+	}
+	
+	/**
+	 * FrontToBack comparator
+	 */
+	private class FrontToBackComp implements Comparator<SpriteInfo>
+	{
+		@Override
+		public int compare(SpriteInfo lhs, SpriteInfo rhs) 
+		{
+			if(lhs == null)
+				return 1;
+			
+			if(rhs == null)
+				return -1;
+			
+			return (int) (rhs.originRotationDepth.w - lhs.originRotationDepth.w);
+		}
+		
+	}
+	
+	/**
+	 * Holding sprite info!
+	 * @author Wildrune
+	 *
+	 */
+	public class SpriteInfo
+	{
+		// sprite info
+		public Rect source;
+		public Rect destination;
+		public Texture2D texture;
+		public Color color;
+		public Vec4 originRotationDepth;
+		
+		public SpriteInfo()
+		{
+			source = new Rect(0, 0, 1, 1);
+			destination = new Rect(0, 0, 1, 1);
+			texture = null;
+			color = new Color(1, 1, 1, 1);
+			originRotationDepth = new Vec4(0, 0, 0, 0);
+		}
+		
+		/**
+		 * Overloaded constructor
+		 */
+		public SpriteInfo(Texture2D tex, Rect source, Rect dest, Color color, Vec4 ord)
+		{
+			this.texture = tex;
+			this.source = source;
+			this.destination = dest;
+			this.color = color;
+			this.originRotationDepth = ord;
 		}
 	}
 }

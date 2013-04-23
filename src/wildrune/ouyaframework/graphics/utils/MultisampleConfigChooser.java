@@ -1,4 +1,4 @@
-package wildrune.ouyaframework;
+package wildrune.ouyaframework.graphics.utils;
 
 import javax.microedition.khronos.egl.EGL10;
 import javax.microedition.khronos.egl.EGLConfig;
