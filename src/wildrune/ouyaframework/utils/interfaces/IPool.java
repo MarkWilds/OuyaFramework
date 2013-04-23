@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.util.interfaces;
+package wildrune.ouyaframework.utils.interfaces;
 
 /**
  * Pool interfac

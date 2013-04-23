@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.util.interfaces;
+package wildrune.ouyaframework.utils.interfaces;
 
 public interface IDisposable {
 	public void Dispose();

@@ -1,6 +1,6 @@
 package wildrune.ouyaframework.math;
 
-import wildrune.ouyaframework.util.ObjectPool;
+import wildrune.ouyaframework.utils.ObjectPool;
 
 /***
  * Vector 2D for game math

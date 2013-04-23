@@ -11,7 +11,7 @@ import android.opengl.GLUtils;
 import android.util.Log;
 
 import wildrune.ouyaframework.graphics.utils.BufferUtils;
-import wildrune.ouyaframework.util.interfaces.IDisposable;
+import wildrune.ouyaframework.utils.interfaces.IDisposable;
 
 /**
  * Class acting as a wrapper for a GL VBO
@@ -103,8 +103,6 @@ public class VertexBuffer implements IDisposable
 				
 		// create the float buffer
 		bufferSize += length;
-		
-		// Optimize with JNI
 		vertexBuffer.position(bufferOffset);
 		BufferUtils.CopyFloats(vertexData, offset, vertexBuffer, length);
 	}

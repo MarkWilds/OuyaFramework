@@ -1,8 +1,8 @@
-package wildrune.ouyaframework.util;
+package wildrune.ouyaframework.utils;
 
 import java.util.Stack;
 
-import wildrune.ouyaframework.util.interfaces.IPool;
+import wildrune.ouyaframework.utils.interfaces.IPool;
 
 /**
  * Pool class handling pooling

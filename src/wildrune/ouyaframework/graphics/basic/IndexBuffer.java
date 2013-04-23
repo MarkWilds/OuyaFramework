@@ -8,7 +8,7 @@ import java.nio.IntBuffer;
 import java.nio.ShortBuffer;
 
 import wildrune.ouyaframework.graphics.utils.BufferUtils;
-import wildrune.ouyaframework.util.interfaces.IDisposable;
+import wildrune.ouyaframework.utils.interfaces.IDisposable;
 import android.opengl.GLUtils;
 import android.util.Log;
 
@@ -90,7 +90,7 @@ public class IndexBuffer implements IDisposable
 		// create the short buffer
 		bufferSize += length;
 		indexBuffer.position(bufferOffset);
-		indexBuffer.put(indexData, offset, length);
+		BufferUtils.CopyShorts(indexData, offset, indexBuffer, length);
 	}
 	
 	/**

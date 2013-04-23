@@ -7,6 +7,7 @@ import java.util.Comparator;
 
 import wildrune.ouyaframework.graphics.basic.*;
 import wildrune.ouyaframework.math.*;
+import android.graphics.Rect;
 import android.util.Log;
 
 /**

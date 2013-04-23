@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.util;
+package wildrune.ouyaframework.utils;
 
 import java.io.InputStream;
 
@@ -12,7 +12,7 @@ import android.graphics.BitmapFactory;
  * @author Wildrune
  *
  */
-public class TextureUtils 
+public class ResourceUtils 
 {
 	/**
 	 * Loads a bitmap from a stream

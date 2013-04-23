@@ -2,7 +2,7 @@ package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
 
-import wildrune.ouyaframework.util.interfaces.IDisposable;
+import wildrune.ouyaframework.utils.interfaces.IDisposable;
 import android.graphics.Bitmap;
 import android.opengl.GLUtils;
 import android.util.Log;
