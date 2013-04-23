@@ -7,7 +7,6 @@ import java.util.Comparator;
 
 import wildrune.ouyaframework.graphics.basic.*;
 import wildrune.ouyaframework.math.*;
-import android.graphics.Rect;
 import android.util.Log;
 
 /**
@@ -295,6 +294,9 @@ public class SpriteBatch
 			float originX, float originY,
 			float depth, float rotation )
 	{
+		if(this.spriteQueueCount > this.maxBatchSize)
+			return;
+		
 		// error check
 		if(texture == null)
 			return;
@@ -491,7 +493,7 @@ public class SpriteBatch
 			return;
 		
 		// sort the sprites
-		SortSprites();
+		//SortSprites();
 		
 		// used vars
 		Texture2D batchTexture = null;
@@ -573,13 +575,23 @@ public class SpriteBatch
 	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
 	{		
 		// rotate sprite
+		float cos = (float) Math.cos(sprite.originRotationDepth.z * RuneMath.TORAD);
+		float sin = (float) Math.sin(sprite.originRotationDepth.z * RuneMath.TORAD);
 		
 		// put all vertices attributes in the buffer
 		for(int i = 0; i < verticesPerSprite; i++)
 		{
 			int offset = vertBuffOffset + VERTEX_ELEMENTS * i;
-			intermBuffer[offset] 	 = (cornerOffsets[i].x * sprite.texture.width) + sprite.destination.left;
-			intermBuffer[offset + 1] = (cornerOffsets[i].y * sprite.texture.height) + sprite.destination.top;
+			
+			float x = cornerOffsets[i].x;
+			float y = cornerOffsets[i].y;
+			float posX = x * cos - y * sin;
+			float posY = x * sin + y * cos;
+			
+			intermBuffer[offset] 	 = (posX * sprite.texture.width) + sprite.destination.left;
+			intermBuffer[offset + 1] = (posY * sprite.texture.height) + sprite.destination.top;
+			
+			
 			intermBuffer[offset + 2] = sprite.originRotationDepth.w;
 
 			intermBuffer[offset + 3] = sprite.color.r;
