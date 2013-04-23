@@ -7,7 +7,6 @@ import java.util.Comparator;
 
 import wildrune.ouyaframework.graphics.basic.*;
 import wildrune.ouyaframework.math.*;
-import android.graphics.Rect;
 import android.util.Log;
 
 /**
@@ -55,9 +54,10 @@ public class SpriteBatch
 	}
 	
 	// comparators
-	private final TextureComp TexComp = new TextureComp();
+	/*private final TextureComp TexComp = new TextureComp();
 	private final BackToFrontComp BackFrontComp = new BackToFrontComp();
 	private final FrontToBackComp FrontBackComp = new FrontToBackComp();
+	*/
 	
 	// members
 	private SpriteInfo[] 	spriteInfoQueue;
@@ -241,7 +241,7 @@ public class SpriteBatch
 			float originX, float originY,
 			float depth, float rotation )
 	{
-		if(this.spriteQueueCount > this.maxBatchSize)
+		if(this.spriteQueueCount >= SpriteBatch.maxBatchSize)
 			return;
 		
 		// error check
@@ -262,10 +262,10 @@ public class SpriteBatch
 		SpriteInfo spriteInfo = spriteInfoQueue[spriteQueueCount];
 		
 		// set destionation
-		spriteInfo.destination.left = (int) destLeft;
-		spriteInfo.destination.top = (int) destTop;
-		spriteInfo.destination.right = (int) destRight;
-		spriteInfo.destination.bottom = (int) destBottom;
+		spriteInfo.destination.x = destLeft;
+		spriteInfo.destination.y = destTop;
+		spriteInfo.destination.width = destRight;
+		spriteInfo.destination.height = destBottom;
 		
 		// set color
 		spriteInfo.color.r = r;
@@ -283,10 +283,10 @@ public class SpriteBatch
 		spriteInfo.texture = texture;
 		
 		// set the spriteInfo source rect
-		spriteInfo.source.left = (int) (sourceLeft / texture.width);
-		spriteInfo.source.top = (int) (sourceTop / texture.height);
-		spriteInfo.source.right = (int) (sourceRight / texture.width);
-		spriteInfo.source.bottom = (int) (sourceBottom / texture.height);
+		spriteInfo.source.x = sourceLeft / texture.width;
+		spriteInfo.source.y = sourceTop / texture.height;
+		spriteInfo.source.width = sourceRight / texture.width;
+		spriteInfo.source.height = sourceBottom / texture.height;
 		
 		// check sort mode and react upon
 		if(spriteSortMode == SpriteSortMode.IMMEDIATE)
@@ -345,6 +345,18 @@ public class SpriteBatch
 	}
 	
 	/**
+	 * Draw sprite with color, source rect, origin, rotation and depth
+	 */
+	public void DrawSprite(Texture2D texture, Vec2 position, Rectangle source, Color color, Vec2 origin, float scale, float rotation)
+	{	
+		// "draw" the sprite
+		DrawSprite(texture, position.x, position.y, texture.width * scale, texture.height * scale,
+				source.x, source.y, source.width, source.height,
+				color.r, color.g, color.b, color.a,
+				origin.x * scale, origin.y * scale, 0 , rotation);
+	}
+	
+	/**
 	 * Draws text
 	 */
 	public void DrawText(Font font, Vec2 position, String text){}	// INIT METHODS
@@ -396,7 +408,7 @@ public class SpriteBatch
 	/**
 	 * Sort the queue based on the sprite sort mode
 	 */
-	private void SortSprites() 
+	/*private void SortSprites() 
 	{
 		switch(spriteSortMode)
 		{
@@ -410,7 +422,7 @@ public class SpriteBatch
 				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.FrontBackComp);
 				break;
 		}
-	}
+	}*/
 	
 	/**
 	 * Set states, bind resources
@@ -537,15 +549,15 @@ public class SpriteBatch
 			buffOffset = vertBuffOffset + VERTEX_ELEMENTS * i;
 			
 			// scale and offset
-			x = cornerOffsets[i].x * sprite.destination.right - sprite.originRotationDepth.x;
-			y = cornerOffsets[i].y * sprite.destination.bottom - sprite.originRotationDepth.y;
+			x = cornerOffsets[i].x * sprite.destination.width - sprite.originRotationDepth.x;
+			y = cornerOffsets[i].y * sprite.destination.height - sprite.originRotationDepth.y;
 			
 			// rotate the created points
 			posX = x * cos - y * sin;
 			posY = x * sin + y * cos;
 			
-			intermBuffer[buffOffset] 	 = posX + sprite.destination.left;
-			intermBuffer[buffOffset + 1] = posY + sprite.destination.top;
+			intermBuffer[buffOffset] 	 = posX + sprite.destination.x;
+			intermBuffer[buffOffset + 1] = posY + sprite.destination.y;
 			intermBuffer[buffOffset + 2] = sprite.originRotationDepth.w;
 
 			// colors
@@ -555,8 +567,8 @@ public class SpriteBatch
 			intermBuffer[buffOffset + 6] = sprite.color.a;
 			
 			// texture coordinates
-			intermBuffer[buffOffset + 7] = cornerOffsets[i].x;
-			intermBuffer[buffOffset + 8] = cornerOffsets[i].y;
+			intermBuffer[buffOffset + 7] = cornerOffsets[i].x * (sprite.source.width - sprite.source.x) + sprite.source.x;
+			intermBuffer[buffOffset + 8] = cornerOffsets[i].y * (sprite.source.height - sprite.source.y) + sprite.source.y;
 			
 			intermCount += VERTEX_ELEMENTS; 
 		}
@@ -626,16 +638,16 @@ public class SpriteBatch
 	public class SpriteInfo
 	{
 		// sprite info
-		public Rect source;
-		public Rect destination;
+		public Rectangle source;
+		public Rectangle destination;
 		public Texture2D texture;
 		public Color color;
 		public Vec4 originRotationDepth;
 		
 		public SpriteInfo()
 		{
-			source = new Rect(0, 0, 1, 1);
-			destination = new Rect(0, 0, 1, 1);
+			source = new Rectangle(0, 0, 1, 1);
+			destination = new Rectangle(0, 0, 1, 1);
 			texture = null;
 			color = new Color(1, 1, 1, 1);
 			originRotationDepth = new Vec4(0, 0, 0, 0);
@@ -644,7 +656,7 @@ public class SpriteBatch
 		/**
 		 * Overloaded constructor
 		 */
-		public SpriteInfo(Texture2D tex, Rect source, Rect dest, Color color, Vec4 ord)
+		public SpriteInfo(Texture2D tex, Rectangle source, Rectangle dest, Color color, Vec4 ord)
 		{
 			this.texture = tex;
 			this.source = source;
