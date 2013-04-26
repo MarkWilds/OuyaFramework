@@ -234,7 +234,7 @@ public class SpriteBatch
 	/**
 	 * Draws a sprite
 	 */
-	private void DrawSprite(Texture2D texture, 
+	public void DrawSprite(Texture2D texture, 
 			float destLeft, float destTop, float destRight, float destBottom,
 			float sourceLeft, float sourceTop, float sourceRight, float sourceBottom,
 			float r, float g, float b, float a,
@@ -303,7 +303,7 @@ public class SpriteBatch
 	{	
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
-				0, 0, 1, 1,
+				0, 0, texture.width, texture.height,
 				1, 1, 1, 1,
 				0, 0, 0, 0);
 	}
@@ -315,7 +315,7 @@ public class SpriteBatch
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
-				0, 0, 1, 1,
+				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
 				origin.x, origin.y, 0, 0);
 	}
@@ -327,7 +327,7 @@ public class SpriteBatch
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
-				0, 0, 1, 1,
+				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
 				origin.x, origin.y, 0 , rotation);
 	}
@@ -339,7 +339,7 @@ public class SpriteBatch
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width * scale, texture.height * scale,
-				0, 0, 1, 1,
+				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
 				origin.x * scale, origin.y * scale, 0 , rotation);
 	}
@@ -359,7 +359,10 @@ public class SpriteBatch
 	/**
 	 * Draws text
 	 */
-	public void DrawText(Font font, Vec2 position, String text){}	// INIT METHODS
+	public void DrawText(Font font, String text, Vec2 position, Color color, float scale, float rot, float spacing)
+	{
+		font.DrawText(this, text, position, color, scale, rot, spacing);
+	}
 
 	
 	// MANAGEMENT
@@ -538,10 +541,16 @@ public class SpriteBatch
 		// used variables
 		int buffOffset = 0;
 		float x, y, posX, posY;
+		float cos = 1.0f;
+		float sin = 0.0f;
+		float rotation = sprite.originRotationDepth.z;
 		
 		// rotate sprite
-		float cos = (float) Math.cos(sprite.originRotationDepth.z * RuneMath.TORAD);
-		float sin = (float) Math.sin(sprite.originRotationDepth.z * RuneMath.TORAD);
+		if(rotation != 0.0f)
+		{
+			cos = (float) Math.cos(rotation * RuneMath.TORAD);
+			sin = (float) Math.sin(rotation * RuneMath.TORAD);
+		}
 		
 		// put all vertices attributes in the buffer
 		for(int i = 0; i < verticesPerSprite; i++)
@@ -567,8 +576,8 @@ public class SpriteBatch
 			intermBuffer[buffOffset + 6] = sprite.color.a;
 			
 			// texture coordinates
-			intermBuffer[buffOffset + 7] = cornerOffsets[i].x * (sprite.source.width - sprite.source.x) + sprite.source.x;
-			intermBuffer[buffOffset + 8] = cornerOffsets[i].y * (sprite.source.height - sprite.source.y) + sprite.source.y;
+			intermBuffer[buffOffset + 7] = cornerOffsets[i].x * sprite.source.width + sprite.source.x;
+			intermBuffer[buffOffset + 8] = cornerOffsets[i].y * sprite.source.height + sprite.source.y;
 			
 			intermCount += VERTEX_ELEMENTS; 
 		}

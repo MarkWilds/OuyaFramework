@@ -13,6 +13,8 @@ public class Vec2
 	public static ObjectPool<Vec2> mParentPool;
 	public float x, y;
 	
+	public Vec2() {}
+	
 	/***
 	 * Overloaded constructors
 	 * @return this vector

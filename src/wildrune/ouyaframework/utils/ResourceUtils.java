@@ -4,8 +4,10 @@ import java.io.InputStream;
 
 import wildrune.ouyaframework.math.RuneMath;
 
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Typeface;
 
 /**
  * Handles texture specific stuff
@@ -45,5 +47,16 @@ public class ResourceUtils
 		
 		// create the bitmap and return it
 		return sourceBitmap;
+	}
+	
+	/***
+	 * Loads a font from a typeface
+	 * @param typeFace
+	 * @param file
+	 * @return
+	 */
+	public static Typeface LoadTypefaceFromAssets(AssetManager assets, String file)
+	{
+		return Typeface.createFromAsset(assets, file);
 	}
 }

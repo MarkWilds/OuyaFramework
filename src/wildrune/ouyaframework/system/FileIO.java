@@ -28,6 +28,14 @@ public class FileIO
 		mContext = context;
 	}
 	
+	/**
+	 * Returns the assetmanager
+	 */
+	public AssetManager GetAssets()
+	{
+		return mContext.getAssets();
+	}
+	
 	/***
 	 * Reads an asset from the assets
 	 * @param file the file path to load from
