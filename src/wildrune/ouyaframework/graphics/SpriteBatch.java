@@ -39,8 +39,8 @@ public class SpriteBatch
 	public enum SpriteEffect
 	{
 		NONE,
-		HORIZONTAL_FLIP,
-		VERTICAL_FLIP;
+		FLIP_HORIZONTAL,
+		FLIP_VERTICAL;
 	}
 	
 	// sprites can be sorted in different ways
@@ -91,11 +91,11 @@ public class SpriteBatch
 	static
 	{
 		// create corner offsets
-		cornerOffsets = new Vec2[4];
+		cornerOffsets = new Vec2[4];		
 		cornerOffsets[0] = new Vec2(0, 0);
-		cornerOffsets[1] = new Vec2(0, 1);
-		cornerOffsets[2] = new Vec2(1, 1);
-		cornerOffsets[3] = new Vec2(1, 0);
+		cornerOffsets[1] = new Vec2(1, 0);
+		cornerOffsets[2] = new Vec2(0, 1);
+		cornerOffsets[3] = new Vec2(1, 1);
 	}
 	
 	/**
@@ -161,15 +161,14 @@ public class SpriteBatch
 		// fill the array
 		int startOffset = 0;
 		for(short i = 0; i < maxBatchSize * verticesPerSprite; i += verticesPerSprite)
-		{
+		{			
 			indices[startOffset++] = i;
-			indices[startOffset++] = (short) (i + 2);
 			indices[startOffset++] = (short) (i + 1);
+			indices[startOffset++] = (short) (i + 2);
 			
-			indices[startOffset++] = i;
+			indices[startOffset++] = (short) (i + 1);
 			indices[startOffset++] = (short) (i + 3);
 			indices[startOffset++] = (short) (i + 2);
-			
 		}
 		
 		// create the indexbuffer
@@ -353,7 +352,7 @@ public class SpriteBatch
 	/**
 	 * Draw sprite with color, origin, rotation and depth
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 effect, float scale, float rotation, SpriteEffect effect)
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin, float scale, float rotation, SpriteEffect effect)
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width * scale, texture.height * scale,
