@@ -9,6 +9,7 @@ import android.graphics.Paint.Style;
 import android.graphics.Typeface;
 import android.util.Log;
 import wildrune.ouyaframework.graphics.SpriteBatch;
+import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
 import wildrune.ouyaframework.math.RuneMath;
 import wildrune.ouyaframework.math.Vec2;
 
@@ -35,14 +36,15 @@ public class Font
 	private static final int UNKNOWN_CHAR = 32;
 	private static final int CHAR_COUNT = MAX_CHAR - MIN_CHAR + 1; // +1 for the unknown char
 	
+	private static final int CHARS_IN_ROW = 16;
 	private static final int MIN_FONT_SIZE = 14;
-	private static final int MAX_FONT_SIZE = 180;
+	private static final int MAX_FONT_SIZE = 128;
 	
 	// intern vars
 	private Glyph[] glyphs;
 	private Rectangle textureRegion;
 	private Texture2D texture;
-	private float fontHeight, fontAscent, fontDescent;
+	private float fontHeight, fontDescent;
 	private int fontPaddingX, fontPaddingY;
 	
 	public Texture2D GetTexture()
@@ -66,6 +68,18 @@ public class Font
 	}
 	
 	/**
+	 * Returns the ideal power of two size for a given size in pixels
+	 * @param pixels the pixes size
+	 * @return the power of two size
+	 */
+	private int GetIdealTextureSize(int pixels)
+	{
+		int prevPOT = RuneMath.PrevPower2( pixels );
+		int nextPOT = RuneMath.NextPower2( pixels - prevPOT );
+		return prevPOT + nextPOT;
+	}
+	
+	/**
 	 * Creates a font that can be used in openGL from a typeface
 	 * @param typeface
 	 * @return
@@ -75,13 +89,16 @@ public class Font
 		// vars
 		float maxCharWidth = 0;
 		float cellWidth, cellHeight;
-		int textureWidth;
+		int textureWidth, textureHeight;
 		fontPaddingX = fontPadX;
 		fontPaddingY = fontPadY;
 		
 		// error checks
 		if(typeface == null)
 			return false;
+		
+		if(!stroke)
+			strokeSize = 0;
 
 		// we create a paint object with our font info
 		Paint paint = new Paint();
@@ -93,7 +110,6 @@ public class Font
 		// get the font metrics
 		Paint.FontMetrics fm = paint.getFontMetrics();
 		fontHeight = (float)Math.ceil(  Math.abs(fm.bottom) + Math.abs(fm.top) );
-		fontAscent = (float)Math.ceil( Math.abs( fm.ascent ) );
 		fontDescent = (float)Math.ceil( Math.abs(fm.descent) );
 		
 		// get each chars width
@@ -123,27 +139,17 @@ public class Font
 			maxCharWidth = width[0];
 		
 		// decide the cell width and height
-		cellWidth = maxCharWidth + (2 * fontPadX);
-		cellHeight = fontHeight + (2 * fontPadY);
+		cellWidth = maxCharWidth + (2 * fontPadX) + strokeSize;
+		cellHeight = fontHeight + (2 * fontPadY) + strokeSize;
 		int maxSize = (int) (cellWidth > cellHeight? cellWidth : cellHeight);
 		
 		if(maxSize < MIN_FONT_SIZE || maxSize > MAX_FONT_SIZE)
 			return false;
 		
-		// specify the texture size
-		if( maxSize <= 24)
-			textureWidth = 256;
-		else if (maxSize <= 40)
-			textureWidth = 512;
-		else if( maxSize <= 80)
-			textureWidth = 1024;
-		else
-			textureWidth = 2048;
-		
-		// get row count
-		int colCount = (int) (textureWidth / cellWidth);
-		int rowCount = (int) Math.ceil( CHAR_COUNT / colCount );
-		int textureHeight = RuneMath.NextPower2( rowCount * (int)cellHeight);
+		// calculate the perfect texture dimensions
+		textureWidth = GetIdealTextureSize( (int) (CHARS_IN_ROW * cellWidth) );
+		int rowCount = (int) (CHAR_COUNT / (float)CHARS_IN_ROW + 0.5f);
+		textureHeight = GetIdealTextureSize( rowCount * (int)cellHeight );
 		
 		// create bitmap
 		Bitmap bitmap;
@@ -155,11 +161,11 @@ public class Font
 		if(stroke)
 		{
 			paint.setStrokeWidth((float)strokeSize);
-			paint.setStyle(Style.FILL_AND_STROKE);
+			paint.setStyle(Style.STROKE);
 
 			// draw all characters onto the bitmap
 			float offsX = fontPadX;
-			float offsY = ( cellHeight - 1) - fontDescent - fontPadY;
+			float offsY = ( cellHeight - 1) - Math.abs(fm.bottom) - fontPadY;
 			
 			for(char c = MIN_CHAR; c <= MAX_CHAR; c++)
 			{
@@ -186,7 +192,7 @@ public class Font
 		
 		// draw all characters onto the bitmap
 		float offsX = fontPadX;
-		float offsY = ( cellHeight - 1) - fontDescent - fontPadY;
+		float offsY = ( cellHeight - 1) - Math.abs(fm.bottom) - fontPadY;
 		
 		for(char c = MIN_CHAR; c <= MAX_CHAR; c++)
 		{
@@ -215,7 +221,7 @@ public class Font
 		for(char c = MIN_CHAR; c <= MAX_CHAR; c++)
 		{
 			// set the texture region
-			Rectangle region = GetGlyphRegion(c);
+			Rectangle region = glyphs[c - MIN_CHAR].region;
 			region.x = offsX;
 			region.y = offsY;
 			region.width = cellWidth;
@@ -243,25 +249,30 @@ public class Font
 	}
 	
 	/**
-	 * Gets the region for the character
-	 * @param c The character to search the region for
-	 * @return The rectangle region on the texture for this char
+	 * Gives back the length in pixels
+	 * @param text the text to measure
+	 * @return length of the text in pixels
 	 */
-	private Rectangle GetGlyphRegion(char c)
-	{
-		int index = c - MIN_CHAR;
-		
-		if(c >= MIN_CHAR && c <= MAX_CHAR)
-		{
-			return glyphs[index].region;
-		}
-		
-		return null;
-	}
-	
 	public int MeasureText(String text)
 	{
-		return 0;
+		int textLength = text.length();
+		int measuredLength = 0;
+		Glyph glyph;
+		for(int i = 0; i < textLength; i++)
+		{
+			// get region
+			char c = text.charAt(i);
+			
+			// get the unknown char glyph if this is not a valid character
+			if(c < MIN_CHAR || c > MAX_CHAR)
+				glyph = glyphs[CHAR_COUNT - 1];
+			else
+				glyph = glyphs[c - MIN_CHAR];
+			
+			measuredLength += glyph.charWidth;
+		}
+		
+		return measuredLength;
 	}
 	
 	/***
@@ -270,7 +281,7 @@ public class Font
 	 * @param text
 	 * @param position
 	 */
-	public void DrawText(SpriteBatch batch, String text, Vec2 position, Color color, float scale, float rot, float spacing)
+	public void DrawText(SpriteBatch batch, String text, Vec2 position, Color color, float scale, float rot, float spacing, SpriteEffect effect)
 	{		
 		// take each character and print it out
 		int textLength = text.length();
@@ -290,10 +301,11 @@ public class Font
 			batch.DrawSprite(texture, position.x, position.y, glyph.region.width * scale, glyph.region.height * scale, 
 					glyph.region.x, glyph.region.y, glyph.region.width, glyph.region.height, 
 					color.r, color.g, color.b, color.a,
-					0, 0, 0, rot);
+					0, 0, 0, rot,
+					effect);
 			
 			// set new position
-			position.x += glyph.charWidth * scale + spacing; 
+			position.x += (fontPaddingX + glyph.charWidth) * scale + spacing; 
 		}
 	}
 }

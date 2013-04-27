@@ -40,7 +40,7 @@ public class SpriteBatch
 	{
 		NONE,
 		HORIZONTAL_FLIP,
-		VERTICAL_FLIP
+		VERTICAL_FLIP;
 	}
 	
 	// sprites can be sorted in different ways
@@ -239,7 +239,8 @@ public class SpriteBatch
 			float sourceLeft, float sourceTop, float sourceRight, float sourceBottom,
 			float r, float g, float b, float a,
 			float originX, float originY,
-			float depth, float rotation )
+			float depth, float rotation,
+			SpriteEffect effect)
 	{
 		if(this.spriteQueueCount >= SpriteBatch.maxBatchSize)
 			return;
@@ -279,7 +280,8 @@ public class SpriteBatch
 		spriteInfo.originRotationDepth.z = rotation;
 		spriteInfo.originRotationDepth.w = depth;
 		
-		// set texture
+		// set texture & effect
+		spriteInfo.spriteEffect = effect;
 		spriteInfo.texture = texture;
 		
 		// set the spriteInfo source rect
@@ -299,61 +301,95 @@ public class SpriteBatch
 	/**
 	 * Standard draw sprite overload
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position)
+	public void DrawSprite(Texture2D texture, Vec2 position, SpriteEffect effect)
 	{	
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
 				0, 0, texture.width, texture.height,
 				1, 1, 1, 1,
-				0, 0, 0, 0);
+				0, 0, 0, 0,
+				effect);
 	}
 	
 	/**
 	 * Draw sprite with color, origin
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin)
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, SpriteEffect effect)
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
 				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
-				origin.x, origin.y, 0, 0);
+				0, 0, 0, 0,
+				effect);
 	}
 	
 	/**
-	 * Draw sprite with color, origin, rotation and depth
+	 * Draw sprite with color, origin
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin, float rotation)
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin, SpriteEffect effect)
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
 				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
-				origin.x, origin.y, 0 , rotation);
+				origin.x, origin.y, 0, 0,
+				effect);
 	}
 	
 	/**
 	 * Draw sprite with color, origin, rotation and depth
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin, float scale, float rotation)
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 origin, float rotation, SpriteEffect effect)
+	{
+		// "draw" the sprite
+		DrawSprite(texture, position.x, position.y, texture.width, texture.height,
+				0, 0, texture.width, texture.height,
+				color.r, color.g, color.b, color.a,
+				origin.x, origin.y, 0 , rotation,
+				effect);
+	}
+	
+	/**
+	 * Draw sprite with color, origin, rotation and depth
+	 */
+	public void DrawSprite(Texture2D texture, Vec2 position, Color color, Vec2 effect, float scale, float rotation, SpriteEffect effect)
 	{
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width * scale, texture.height * scale,
 				0, 0, texture.width, texture.height,
 				color.r, color.g, color.b, color.a,
-				origin.x * scale, origin.y * scale, 0 , rotation);
+				origin.x * scale, origin.y * scale, 0 , rotation,
+				effect);
 	}
 	
 	/**
 	 * Draw sprite with color, source rect, origin, rotation and depth
 	 */
-	public void DrawSprite(Texture2D texture, Vec2 position, Rectangle source, Color color, Vec2 origin, float scale, float rotation)
+	public void DrawSprite(Texture2D texture, Vec2 position, Rectangle source, Color color, Vec2 origin, float scale, float rotation, SpriteEffect effect)
 	{	
 		// "draw" the sprite
 		DrawSprite(texture, position.x, position.y, texture.width * scale, texture.height * scale,
 				source.x, source.y, source.width, source.height,
 				color.r, color.g, color.b, color.a,
-				origin.x * scale, origin.y * scale, 0 , rotation);
+				origin.x * scale, origin.y * scale, 0 , rotation,
+				effect);
+	}
+	
+	/**
+	 * Draws text
+	 */
+	public void DrawText(Font font, String text, Vec2 position)
+	{
+		font.DrawText(this, text, position, Color.WHITE, 1.0f, 0.0f, 0.0f, SpriteEffect.NONE);
+	}
+	
+	/**
+	 * Draws text
+	 */
+	public void DrawText(Font font, String text, Vec2 position, Color color)
+	{
+		font.DrawText(this, text, position, color, 1.0f, 0.0f, 0.0f, SpriteEffect.NONE);
 	}
 	
 	/**
@@ -361,7 +397,7 @@ public class SpriteBatch
 	 */
 	public void DrawText(Font font, String text, Vec2 position, Color color, float scale, float rot, float spacing)
 	{
-		font.DrawText(this, text, position, color, scale, rot, spacing);
+		font.DrawText(this, text, position, color, scale, rot, spacing, SpriteEffect.NONE);
 	}
 
 	
@@ -544,6 +580,7 @@ public class SpriteBatch
 		float cos = 1.0f;
 		float sin = 0.0f;
 		float rotation = sprite.originRotationDepth.z;
+		int effect = sprite.spriteEffect.ordinal();
 		
 		// rotate sprite
 		if(rotation != 0.0f)
@@ -565,6 +602,7 @@ public class SpriteBatch
 			posX = x * cos - y * sin;
 			posY = x * sin + y * cos;
 			
+			// set the position and depth in a temp buffer
 			intermBuffer[buffOffset] 	 = posX + sprite.destination.x;
 			intermBuffer[buffOffset + 1] = posY + sprite.destination.y;
 			intermBuffer[buffOffset + 2] = sprite.originRotationDepth.w;
@@ -576,8 +614,8 @@ public class SpriteBatch
 			intermBuffer[buffOffset + 6] = sprite.color.a;
 			
 			// texture coordinates
-			intermBuffer[buffOffset + 7] = cornerOffsets[i].x * sprite.source.width + sprite.source.x;
-			intermBuffer[buffOffset + 8] = cornerOffsets[i].y * sprite.source.height + sprite.source.y;
+			intermBuffer[buffOffset + 7] = cornerOffsets[i ^ effect].x * sprite.source.width + sprite.source.x;
+			intermBuffer[buffOffset + 8] = cornerOffsets[i ^ effect].y * sprite.source.height + sprite.source.y;
 			
 			intermCount += VERTEX_ELEMENTS; 
 		}
@@ -652,6 +690,7 @@ public class SpriteBatch
 		public Texture2D texture;
 		public Color color;
 		public Vec4 originRotationDepth;
+		public SpriteEffect spriteEffect;
 		
 		public SpriteInfo()
 		{
@@ -660,18 +699,7 @@ public class SpriteBatch
 			texture = null;
 			color = new Color(1, 1, 1, 1);
 			originRotationDepth = new Vec4(0, 0, 0, 0);
-		}
-		
-		/**
-		 * Overloaded constructor
-		 */
-		public SpriteInfo(Texture2D tex, Rectangle source, Rectangle dest, Color color, Vec4 ord)
-		{
-			this.texture = tex;
-			this.source = source;
-			this.destination = dest;
-			this.color = color;
-			this.originRotationDepth = ord;
+			spriteEffect = SpriteEffect.NONE;
 		}
 	}
 }
