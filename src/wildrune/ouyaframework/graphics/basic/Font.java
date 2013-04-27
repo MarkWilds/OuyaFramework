@@ -87,16 +87,8 @@ public class Font
 		Paint paint = new Paint();
 		paint.setAntiAlias(aa);
 		paint.setTextSize(size);
-		paint.setColor( 0xffffffff );
+		paint.setColor( 0xff000000 );
 		paint.setTypeface(typeface);
-		
-		if(stroke)
-		{
-			paint.setStrokeCap(Cap.ROUND);
-			paint.setStrokeJoin(Join.ROUND);
-			paint.setStrokeWidth((float)strokeSize);
-			paint.setStyle(Style.STROKE);
-		}
 		
 		// get the font metrics
 		Paint.FontMetrics fm = paint.getFontMetrics();
@@ -112,8 +104,6 @@ public class Font
 			// get the character width
 			character[0] = c;
 			paint.getTextWidths(character, 0, 1, width);
-			
-			Log.d(LOG_TAG, "char: " + c + " w: " + width[0]);
 			
 			// put the char in the glyph
 			int index = c - MIN_CHAR;
@@ -160,7 +150,40 @@ public class Font
 		bitmap = Bitmap.createBitmap(textureWidth, textureHeight, Bitmap.Config.ARGB_4444);
 		Canvas canvas = new Canvas(bitmap);
 		bitmap.eraseColor(0x00000000);
+		
+		// draw stroked
+		if(stroke)
+		{
+			paint.setStrokeWidth((float)strokeSize);
+			paint.setStyle(Style.FILL_AND_STROKE);
+
+			// draw all characters onto the bitmap
+			float offsX = fontPadX;
+			float offsY = ( cellHeight - 1) - fontDescent - fontPadY;
 			
+			for(char c = MIN_CHAR; c <= MAX_CHAR; c++)
+			{
+				character[0] = c;
+				canvas.drawText(character, 0, 1, offsX, offsY, paint);
+				
+				// new offsets
+				offsX += cellWidth;
+				if( (offsX + cellWidth - fontPadX) > textureWidth)
+				{
+					offsX = fontPadX;
+					offsY += cellHeight;
+				}
+			}
+			
+			// draw unknown as last
+			character[0] = UNKNOWN_CHAR;
+			canvas.drawText(character, 0, 1, offsX, offsY, paint);
+		}
+		
+		paint.setColor( 0xffffffff );
+		paint.setStrokeWidth(0);
+		paint.setStyle(Style.FILL);
+		
 		// draw all characters onto the bitmap
 		float offsX = fontPadX;
 		float offsY = ( cellHeight - 1) - fontDescent - fontPadY;
