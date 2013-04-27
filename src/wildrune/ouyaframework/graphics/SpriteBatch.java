@@ -27,7 +27,7 @@ public class SpriteBatch
 	private final static int BYTES_PER_FLOAT = 4;
 	
 	// batch data
-	private final static int maxBatchSize = 2048;
+	private final static int maxBatchSize = 1024;
 	private final static int initialQueueSize = 64;
 	private final static int verticesPerSprite = 4;
 	private final static int indicesPerSprite = 6;

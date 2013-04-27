@@ -3,17 +3,16 @@ package wildrune.ouyaframework.graphics.basic;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.Paint.Cap;
-import android.graphics.Paint.Join;
 import android.graphics.Paint.Style;
 import android.graphics.Typeface;
-import android.util.Log;
 import wildrune.ouyaframework.graphics.SpriteBatch;
 import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
+import wildrune.ouyaframework.graphics.states.SamplerState;
 import wildrune.ouyaframework.math.RuneMath;
 import wildrune.ouyaframework.math.Vec2;
+import wildrune.ouyaframework.utils.interfaces.IDisposable;
 
-public class Font 
+public class Font implements IDisposable
 {
 	public static final String LOG_TAG = "Font";
 	
@@ -44,7 +43,6 @@ public class Font
 	private Glyph[] glyphs;
 	private Rectangle textureRegion;
 	private Texture2D texture;
-	private float fontHeight, fontDescent;
 	private int fontPaddingX, fontPaddingY;
 	
 	public Texture2D GetTexture()
@@ -68,6 +66,14 @@ public class Font
 	}
 	
 	/**
+	 * Disposes of this font's resources
+	 */
+	public void Dispose()
+	{
+		texture.Dispose();
+	}
+	
+	/**
 	 * Returns the ideal power of two size for a given size in pixels
 	 * @param pixels the pixes size
 	 * @return the power of two size
@@ -77,6 +83,33 @@ public class Font
 		int prevPOT = RuneMath.PrevPower2( pixels );
 		int nextPOT = RuneMath.NextPower2( pixels - prevPOT );
 		return prevPOT + nextPOT;
+	}
+	
+	/**
+	 * Gives back the length in pixels
+	 * @param text the text to measure
+	 * @return length of the text in pixels
+	 */
+	public int MeasureText(String text)
+	{
+		int textLength = text.length();
+		int measuredLength = 0;
+		Glyph glyph;
+		for(int i = 0; i < textLength; i++)
+		{
+			// get region
+			char c = text.charAt(i);
+			
+			// get the unknown char glyph if this is not a valid character
+			if(c < MIN_CHAR || c > MAX_CHAR)
+				glyph = glyphs[CHAR_COUNT - 1];
+			else
+				glyph = glyphs[c - MIN_CHAR];
+			
+			measuredLength += glyph.charWidth;
+		}
+		
+		return measuredLength;
 	}
 	
 	/**
@@ -109,8 +142,7 @@ public class Font
 		
 		// get the font metrics
 		Paint.FontMetrics fm = paint.getFontMetrics();
-		fontHeight = (float)Math.ceil(  Math.abs(fm.bottom) + Math.abs(fm.top) );
-		fontDescent = (float)Math.ceil( Math.abs(fm.descent) );
+		float fontHeight = (float)Math.ceil(  Math.abs(fm.bottom) + Math.abs(fm.top) );
 		
 		// get each chars width
 		char[] character = new char[2];
@@ -213,7 +245,7 @@ public class Font
 		canvas.drawText(character, 0, 1, offsX, offsY, paint);
 		
 		// create the texture
-		texture.Create(bitmap, false);
+		texture.Create(bitmap, false, SamplerState.PointClamp);
 		bitmap.recycle();
 		
 		// create glyph regions
@@ -246,33 +278,6 @@ public class Font
 			}
 		}
 		return true;
-	}
-	
-	/**
-	 * Gives back the length in pixels
-	 * @param text the text to measure
-	 * @return length of the text in pixels
-	 */
-	public int MeasureText(String text)
-	{
-		int textLength = text.length();
-		int measuredLength = 0;
-		Glyph glyph;
-		for(int i = 0; i < textLength; i++)
-		{
-			// get region
-			char c = text.charAt(i);
-			
-			// get the unknown char glyph if this is not a valid character
-			if(c < MIN_CHAR || c > MAX_CHAR)
-				glyph = glyphs[CHAR_COUNT - 1];
-			else
-				glyph = glyphs[c - MIN_CHAR];
-			
-			measuredLength += glyph.charWidth;
-		}
-		
-		return measuredLength;
 	}
 	
 	/***

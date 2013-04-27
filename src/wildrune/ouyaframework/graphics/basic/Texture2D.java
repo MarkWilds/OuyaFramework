@@ -2,6 +2,7 @@ package wildrune.ouyaframework.graphics.basic;
 
 import static android.opengl.GLES20.*;
 
+import wildrune.ouyaframework.graphics.states.SamplerState;
 import wildrune.ouyaframework.utils.interfaces.IDisposable;
 import android.graphics.Bitmap;
 import android.opengl.GLUtils;
@@ -26,6 +27,7 @@ public class Texture2D implements IDisposable, Comparable<Texture2D>
 	public int textureHandle;
 	public int width;
 	public int height;
+	public SamplerState samplerState;
 	
 	/**
 	 * Constructor
@@ -53,7 +55,7 @@ public class Texture2D implements IDisposable, Comparable<Texture2D>
 	 * @param mipmap
 	 * @return
 	 */
-	public boolean Create(Bitmap bitmap, boolean mipmap)
+	public boolean Create(Bitmap bitmap, boolean mipmap, SamplerState state)
 	{
 		if(bitmap == null)
 		{
@@ -81,7 +83,9 @@ public class Texture2D implements IDisposable, Comparable<Texture2D>
 			// load texture to GPU
 			GLUtils.texImage2D(GL_TEXTURE_2D, 0, bitmap, 0);
 			
-			SetSamplerState();
+			// set and active state
+			samplerState = state;
+			samplerState.SetState();
 			
 			// generate mipmaps
 			if(mipmap)
@@ -102,24 +106,6 @@ public class Texture2D implements IDisposable, Comparable<Texture2D>
 		
 		Log.d(LOG_TAG, "No valid texture handle could be retreived");
 		return false;
-	}
-	
-	/**
-	 * Specify the sampler state for this texture
-	 */
-	public void SetSamplerState()
-	{
-		// set filtering
-		//glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		
-		//int wrap = GL_REPEAT;
-		int wrap = GL_CLAMP_TO_EDGE;
-		
-		// set wrapping
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
 	}
 	
 	/**
