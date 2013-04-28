@@ -53,6 +53,36 @@ public class SpriteBatch
 		FRONTTOBACK
 	}
 	
+	// spritebath shaders
+	private final String vShader =
+			"attribute vec3 a_position;" +
+			"attribute vec4 a_color;" +
+			"attribute vec2 a_texcoord_one;" +
+		
+			"uniform mat4 uMVP;" +
+		
+			"varying vec4 v_color;" +
+			"varying vec2 v_texcoord_one;" +
+		
+			"void main()" +
+			"{" +
+				"gl_Position = uMVP * vec4(a_position, 1.0);" +  
+				"v_color = a_color;" +
+				"v_texcoord_one = a_texcoord_one;" +              
+			"}";
+	
+	
+	private final String fShader = 
+			"precision mediump float;" +
+			"uniform sampler2D u_texture_one;" +	
+			"varying vec4 v_color;" +
+			"varying vec2 v_texcoord_one;" +
+			"void main()" +
+			"{" +
+				"vec4 newColor = v_color * texture2D(u_texture_one, v_texcoord_one );" +
+				"gl_FragColor = newColor;" +
+			"}";
+	
 	// comparators
 	private final TextureComp TexComp = new TextureComp();
 	private final BackToFrontComp BackFrontComp = new BackToFrontComp();
@@ -100,10 +130,17 @@ public class SpriteBatch
 	/**
 	 * Constructors
 	 */
-	public SpriteBatch(Graphics graphics, ShaderProgram shaderProgram)
+	public SpriteBatch(Graphics graphics)
 	{
 		// create the used shader program
-		spriteBatchProgram = shaderProgram;
+		spriteBatchProgram = new ShaderProgram();
+		
+		// create program
+		if(!spriteBatchProgram.Create())
+			Log.d(LOG_TAG, "Could not create shaderProgram");
+		
+		if(!spriteBatchProgram.LinkShaders(vShader, fShader))
+			Log.d(LOG_TAG, "Could not link shaderProgram");
 		
 		matrixLocaton = spriteBatchProgram.GetUniformLocation("uMVP");
 		aPosition = spriteBatchProgram.GetAttribLocation("a_position");
@@ -144,6 +181,7 @@ public class SpriteBatch
 	 */
 	public void Dispose()
 	{
+		spriteBatchProgram.Dispose();
 		vertexBuffer.Dispose();
 		indexBuffer.Dispose();
 		spriteInfoQueue = null;
