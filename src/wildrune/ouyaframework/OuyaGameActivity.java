@@ -5,12 +5,14 @@ import javax.microedition.khronos.opengles.GL10;
 
 import tv.ouya.console.api.OuyaController;
 
+import wildrune.ouyaframework.audio.Audio;
 import wildrune.ouyaframework.graphics.Graphics;
 import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
 import wildrune.ouyaframework.system.Clock;
 import wildrune.ouyaframework.system.FileIO;
 
 import android.app.Activity;
+import android.media.AudioManager;
 import android.opengl.GLSurfaceView;
 import android.os.Bundle;
 import android.view.KeyEvent;
@@ -33,12 +35,13 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	protected boolean isSampling;
 	
 	// ==================== SUBSYSTEMS ==========================
-	protected Graphics 		Graphics;
-	protected FileIO 		FileIO;
+	public Graphics 		gameGraphics;
+	public FileIO 		gameFileIO;
+	public Audio  		gameAudio;
 	private Clock			gameClock;
 	
 	// ===================== GAME TIMER ==========================
-	protected Clock.Timer 	gameTimer;
+	public Clock.Timer 	gameTimer;
 	private float			mAccumulatedFrameTime;
 	
 	// =====================  ABSTRACT METHODS ======================
@@ -101,8 +104,11 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		}
 
 		// initialize subsystems
-		Graphics = new Graphics(usedWidth, usedHeight);
-		FileIO = new FileIO(this);
+		gameGraphics = new Graphics(usedWidth, usedHeight);
+		gameFileIO = new FileIO(this);
+		gameAudio = new Audio(this);
+		gameAudio.Create();
+		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		
 		gameClock = new Clock();
 		gameClock.SetMaxFrameTime(500);
@@ -123,10 +129,16 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	{
 		super.onPause();
 		gameView.onPause();
-		
+
 		// check if we are finishing or not
 		if(isFinishing())
+		{
+			// release game subsystems
+			gameAudio.Dispose();
+			
+			// release game
 			Dispose();
+		}
 	}
 
 	/***
@@ -136,6 +148,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	protected void onResume() 
 	{
 		super.onResume();
+		
 		gameView.onResume();
 	}
 	

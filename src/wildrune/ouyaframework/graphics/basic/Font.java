@@ -44,6 +44,7 @@ public class Font implements IDisposable
 	private Rectangle textureRegion;
 	private Texture2D texture;
 	private int fontPaddingX, fontPaddingY;
+	public float fontHeight;
 	
 	public Texture2D GetTexture()
 	{
@@ -86,6 +87,14 @@ public class Font implements IDisposable
 	}
 	
 	/**
+	 * Gets the height of this font
+	 */
+	public int GetFontHeight()
+	{
+		return (int)this.fontHeight;
+	}
+	
+	/**
 	 * Gives back the length in pixels
 	 * @param text the text to measure
 	 * @return length of the text in pixels
@@ -106,7 +115,7 @@ public class Font implements IDisposable
 			else
 				glyph = glyphs[c - MIN_CHAR];
 			
-			measuredLength += glyph.charWidth;
+			measuredLength += glyph.charWidth +  (i == (textLength-1)? 0 : (fontPaddingX * 2) );
 		}
 		
 		return measuredLength;
@@ -142,7 +151,7 @@ public class Font implements IDisposable
 		
 		// get the font metrics
 		Paint.FontMetrics fm = paint.getFontMetrics();
-		float fontHeight = (float)Math.ceil(  Math.abs(fm.bottom) + Math.abs(fm.top) );
+		fontHeight = (float)Math.ceil(  Math.abs(fm.bottom) + Math.abs(fm.top) );
 		
 		// get each chars width
 		char[] character = new char[2];

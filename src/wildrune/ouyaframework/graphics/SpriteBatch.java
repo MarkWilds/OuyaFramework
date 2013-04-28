@@ -54,10 +54,9 @@ public class SpriteBatch
 	}
 	
 	// comparators
-	/*private final TextureComp TexComp = new TextureComp();
+	private final TextureComp TexComp = new TextureComp();
 	private final BackToFrontComp BackFrontComp = new BackToFrontComp();
 	private final FrontToBackComp FrontBackComp = new FrontToBackComp();
-	*/
 	
 	// members
 	private SpriteInfo[] 	spriteInfoQueue;
@@ -230,6 +229,226 @@ public class SpriteBatch
 		beginEndPair = false;
 	}
 	
+	// MANAGEMENT
+	/**
+	 * Grows the spritequeue when needed
+	 */
+	private void GrowSpriteQueue() 
+	{
+		int newSize = this.spriteQueueArraySize * 2;
+		SpriteInfo[] newQueue = new SpriteInfo[newSize];
+		
+		// copy old data over
+		for(int i = 0; i < this.spriteQueueCount; i++)
+		{
+			newQueue[i] = this.spriteInfoQueue[i];
+		}
+		
+		// initialize new spriteinfo if needed
+		for(int i = this.spriteQueueCount; i < newSize; i++)
+		{
+			// init new sprite info
+			newQueue[i] = new SpriteInfo();
+		}
+		
+		this.spriteInfoQueue = newQueue;
+		this.spriteQueueArraySize = newSize;
+	}
+	
+	/**
+	 * Grows the intermediate buffe when needed
+	 */
+	private void GrowIntermBuffer()
+	{
+		int newSize = this.spriteQueueArraySize * 2;
+		float[] newBuffer = new float[newSize * verticesPerSprite * VERTEX_ELEMENTS];
+		
+		// copy old data over
+		for(int i = 0; i < this.intermCount; i++)
+		{
+			newBuffer[i] = this.intermBuffer[i];
+		}
+		
+		this.intermBuffer = newBuffer;
+	}
+	
+	/**
+	 * Sort the queue based on the sprite sort mode
+	 */
+	private void SortSprites() 
+	{
+		switch(spriteSortMode)
+		{
+			case TEXTURE:
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.TexComp);
+				break;
+			case BACKTOFRONT:
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.BackFrontComp);
+				break;
+			case FRONTTOBACK:
+				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.FrontBackComp);
+				break;
+		}
+	}
+	
+	/**
+	 * Set states, bind resources
+	 */
+	private void PrepareForRendering() 
+	{
+		// set the shader program
+		spriteBatchProgram.Bind();
+		spriteBatchProgram.SetUniform(matrixLocaton, transformMatrix.elements);
+		spriteBatchProgram.SetUniform(uTexOne, 0);
+		
+		// set the vertex buffer and attribute pointers
+		vertexBuffer.Bind();
+		int bytesPerVertex = VERTEX_ELEMENTS * BYTES_PER_FLOAT;
+		vertexBuffer.SetVertexAttribPointer(0 * BYTES_PER_FLOAT, aPosition, 3, bytesPerVertex);
+		vertexBuffer.SetVertexAttribPointer(3 * BYTES_PER_FLOAT, aColor, 4, bytesPerVertex);
+		vertexBuffer.SetVertexAttribPointer(7 * BYTES_PER_FLOAT, aTexCoord, 2, bytesPerVertex);
+		
+		// set indexbuffer
+		indexBuffer.Bind();
+	}
+	
+	/**
+	 * Start flushing the sprites to the GPU
+	 */
+	private void FlushBatch() 
+	{
+		if(spriteQueueCount <= 0)
+			return;
+		
+		// sort the sprites
+		//SortSprites();
+		
+		// used vars
+		Texture2D batchTexture = null;
+		Texture2D spriteTexture = null;
+		SpriteInfo[] localSpriteQueue = spriteInfoQueue;
+		int batchStart = 0;
+		
+		// iterate all sprites
+		for(int pos = 0; pos < spriteQueueCount; pos++)
+		{
+			spriteTexture = localSpriteQueue[pos].texture;
+			
+			// if the textures are not the same we will draw a batch
+			if(spriteTexture.compareTo(batchTexture) != 0)
+			{
+				// only if the pos is higher than batch start we will draw
+				if(pos > batchStart)
+				{
+					RenderBatch(batchTexture, batchStart, pos - batchStart);
+				}
+				
+				batchTexture = spriteTexture;
+				batchStart = pos;
+			}
+		}
+		
+		// render final batch
+		RenderBatch(batchTexture, batchStart, spriteQueueCount - batchStart);
+		
+		// reset queue
+		spriteQueueCount = 0;
+	}
+	
+	/**
+	 * Render a batch
+	 * @param tex the texture to batch with
+	 * @param spriteBatchStart where to start batching from
+	 * @param count the amount of sprites to draw
+	 */
+	private void RenderBatch(Texture2D tex, int spriteBatchStart, int count)
+	{
+		// bind the texture
+		tex.Bind(0);
+		int spriteCount = count;
+		
+		// iterate all sprites
+		while(count > 0)
+		{
+			int batchSize = count;
+			
+			// int remainingSpace
+			// check if we have room for all the sprites we want to draw
+			
+			// generate sprite vertex data
+			for(int i = 0; i < batchSize; i++)
+			{
+				RenderSprite(spriteInfoQueue[ spriteBatchStart + i], verticesPerSprite * VERTEX_ELEMENTS * i );
+			}
+			
+			count -= batchSize;
+			spriteBatchStart += batchSize;
+		}
+		
+		// upload data to the GPU
+		vertexBuffer.SetData(0, intermBuffer, 0, intermCount);
+		vertexBuffer.Apply();
+		intermCount = 0;
+		
+		// draw the sprites
+		glDrawElements(GL_TRIANGLES, spriteCount * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
+	}
+	
+	/**
+	 * Generate the vertex attributes from sprite data
+	 * and put these in the vertexbuffer
+	 * @param sprite the sprite to add to the vertexbuffer
+	 * @param vertBuffOffset where to start putting the data in the vertexbuffer
+	 */
+	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
+	{		
+		// used variables
+		int buffOffset = 0;
+		float x, y, posX, posY;
+		float cos = 1.0f;
+		float sin = 0.0f;
+		float rotation = sprite.originRotationDepth.z;
+		int effect = sprite.spriteEffect.ordinal();
+		
+		// rotate sprite
+		if(rotation != 0.0f)
+		{
+			cos = (float) Math.cos(rotation * RuneMath.TORAD);
+			sin = (float) Math.sin(rotation * RuneMath.TORAD);
+		}
+		
+		// put all vertices attributes in the buffer
+		for(int i = 0; i < verticesPerSprite; i++)
+		{
+			buffOffset = vertBuffOffset + VERTEX_ELEMENTS * i;
+			
+			// scale and offset
+			x = cornerOffsets[i].x * sprite.destination.width - sprite.originRotationDepth.x;
+			y = cornerOffsets[i].y * sprite.destination.height - sprite.originRotationDepth.y;
+			
+			// rotate the created points
+			posX = x * cos - y * sin;
+			posY = x * sin + y * cos;
+			
+			// set the position and depth in a temp buffer
+			intermBuffer[buffOffset] 	 = (int)(posX + sprite.destination.x);
+			intermBuffer[buffOffset + 1] = (int)(posY + sprite.destination.y);
+			intermBuffer[buffOffset + 2] = sprite.originRotationDepth.w;
+
+			// colors
+			intermBuffer[buffOffset + 3] = sprite.color.r;
+			intermBuffer[buffOffset + 4] = sprite.color.g;
+			intermBuffer[buffOffset + 5] = sprite.color.b;
+			intermBuffer[buffOffset + 6] = sprite.color.a;
+			
+			// texture coordinates
+			intermBuffer[buffOffset + 7] = cornerOffsets[i ^ effect].x * sprite.source.width + sprite.source.x;
+			intermBuffer[buffOffset + 8] = cornerOffsets[i ^ effect].y * sprite.source.height + sprite.source.y;
+			
+			intermCount += VERTEX_ELEMENTS; 
+		}
+	}
+	
 	/**
 	 * Draws a sprite
 	 */
@@ -397,227 +616,6 @@ public class SpriteBatch
 	public void DrawText(Font font, String text, Vec2 position, Color color, float scale, float rot, float spacing)
 	{
 		font.DrawText(this, text, position, color, scale, rot, spacing, SpriteEffect.NONE);
-	}
-
-	
-	// MANAGEMENT
-	/**
-	 * Grows the spritequeue when needed
-	 */
-	private void GrowSpriteQueue() 
-	{
-		int newSize = this.spriteQueueArraySize * 2;
-		SpriteInfo[] newQueue = new SpriteInfo[newSize];
-		
-		// copy old data over
-		for(int i = 0; i < this.spriteQueueCount; i++)
-		{
-			newQueue[i] = this.spriteInfoQueue[i];
-		}
-		
-		// initialize new spriteinfo if needed
-		for(int i = this.spriteQueueCount; i < newSize; i++)
-		{
-			// init new sprite info
-			newQueue[i] = new SpriteInfo();
-		}
-		
-		this.spriteInfoQueue = newQueue;
-		this.spriteQueueArraySize = newSize;
-	}
-	
-	/**
-	 * Grows the intermediate buffe when needed
-	 */
-	private void GrowIntermBuffer()
-	{
-		int newSize = this.spriteQueueArraySize * 2;
-		float[] newBuffer = new float[newSize * verticesPerSprite * VERTEX_ELEMENTS];
-		
-		// copy old data over
-		for(int i = 0; i < this.intermCount; i++)
-		{
-			newBuffer[i] = this.intermBuffer[i];
-		}
-		
-		this.intermBuffer = newBuffer;
-	}
-	
-	/**
-	 * Sort the queue based on the sprite sort mode
-	 */
-	/*private void SortSprites() 
-	{
-		switch(spriteSortMode)
-		{
-			case TEXTURE:
-				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.TexComp);
-				break;
-			case BACKTOFRONT:
-				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.BackFrontComp);
-				break;
-			case FRONTTOBACK:
-				Arrays.sort(spriteInfoQueue, 0, spriteQueueCount, this.FrontBackComp);
-				break;
-		}
-	}*/
-	
-	/**
-	 * Set states, bind resources
-	 */
-	private void PrepareForRendering() 
-	{
-		// set the shader program
-		spriteBatchProgram.Bind();
-		spriteBatchProgram.SetUniform(matrixLocaton, transformMatrix.elements);
-		spriteBatchProgram.SetUniform(uTexOne, 0);
-		
-		// set the vertex buffer and attribute pointers
-		vertexBuffer.Bind();
-		int bytesPerVertex = VERTEX_ELEMENTS * BYTES_PER_FLOAT;
-		vertexBuffer.SetVertexAttribPointer(0 * BYTES_PER_FLOAT, aPosition, 3, bytesPerVertex);
-		vertexBuffer.SetVertexAttribPointer(3 * BYTES_PER_FLOAT, aColor, 4, bytesPerVertex);
-		vertexBuffer.SetVertexAttribPointer(7 * BYTES_PER_FLOAT, aTexCoord, 2, bytesPerVertex);
-		
-		// set indexbuffer
-		indexBuffer.Bind();
-	}
-	
-	/**
-	 * Start flushing the sprites to the GPU
-	 */
-	private void FlushBatch() 
-	{
-		if(spriteQueueCount <= 0)
-			return;
-		
-		// sort the sprites
-		//SortSprites();
-		
-		// used vars
-		Texture2D batchTexture = null;
-		Texture2D spriteTexture = null;
-		SpriteInfo[] localSpriteQueue = spriteInfoQueue;
-		int batchStart = 0;
-		
-		// iterate all sprites
-		for(int pos = 0; pos < spriteQueueCount; pos++)
-		{
-			spriteTexture = localSpriteQueue[pos].texture;
-			
-			// if the textures are not the same we will draw a batch
-			if(spriteTexture.compareTo(batchTexture) != 0)
-			{
-				// only if the pos is higher than batch start we will draw
-				if(pos > batchStart)
-				{
-					RenderBatch(batchTexture, batchStart, pos - batchStart);
-				}
-				
-				batchTexture = spriteTexture;
-				batchStart = pos;
-			}
-		}
-		
-		// render final batch
-		RenderBatch(batchTexture, batchStart, spriteQueueCount - batchStart);
-		
-		// reset queue
-		spriteQueueCount = 0;
-	}
-	
-	/**
-	 * Render a batch
-	 * @param tex the texture to batch with
-	 * @param spriteBatchStart where to start batching from
-	 * @param count the amount of sprites to draw
-	 */
-	private void RenderBatch(Texture2D tex, int spriteBatchStart, int count)
-	{
-		// bind the texture
-		tex.Bind(0);
-		int spriteCount = count;
-		
-		// iterate all sprites
-		while(count > 0)
-		{
-			int batchSize = count;
-			
-			// int remainingSpace
-			// check if we have room for all the sprites we want to draw
-			
-			// generate sprite vertex data
-			for(int i = 0; i < batchSize; i++)
-			{
-				RenderSprite(spriteInfoQueue[ spriteBatchStart + i], verticesPerSprite * VERTEX_ELEMENTS * i );
-			}
-			
-			count -= batchSize;
-			spriteBatchStart += batchSize;
-		}
-		
-		// upload data to the GPU
-		vertexBuffer.SetData(0, intermBuffer, 0, intermCount);
-		vertexBuffer.Apply();
-		intermCount = 0;
-		
-		// draw the sprites
-		glDrawElements(GL_TRIANGLES, spriteCount * indicesPerSprite, GL_UNSIGNED_SHORT, 0);
-	}
-	
-	/**
-	 * Generate the vertex attributes from sprite data
-	 * and put these in the vertexbuffer
-	 * @param sprite the sprite to add to the vertexbuffer
-	 * @param vertBuffOffset where to start putting the data in the vertexbuffer
-	 */
-	private void RenderSprite(SpriteInfo sprite, int vertBuffOffset)
-	{		
-		// used variables
-		int buffOffset = 0;
-		float x, y, posX, posY;
-		float cos = 1.0f;
-		float sin = 0.0f;
-		float rotation = sprite.originRotationDepth.z;
-		int effect = sprite.spriteEffect.ordinal();
-		
-		// rotate sprite
-		if(rotation != 0.0f)
-		{
-			cos = (float) Math.cos(rotation * RuneMath.TORAD);
-			sin = (float) Math.sin(rotation * RuneMath.TORAD);
-		}
-		
-		// put all vertices attributes in the buffer
-		for(int i = 0; i < verticesPerSprite; i++)
-		{
-			buffOffset = vertBuffOffset + VERTEX_ELEMENTS * i;
-			
-			// scale and offset
-			x = cornerOffsets[i].x * sprite.destination.width - sprite.originRotationDepth.x;
-			y = cornerOffsets[i].y * sprite.destination.height - sprite.originRotationDepth.y;
-			
-			// rotate the created points
-			posX = x * cos - y * sin;
-			posY = x * sin + y * cos;
-			
-			// set the position and depth in a temp buffer
-			intermBuffer[buffOffset] 	 = posX + sprite.destination.x;
-			intermBuffer[buffOffset + 1] = posY + sprite.destination.y;
-			intermBuffer[buffOffset + 2] = sprite.originRotationDepth.w;
-
-			// colors
-			intermBuffer[buffOffset + 3] = sprite.color.r;
-			intermBuffer[buffOffset + 4] = sprite.color.g;
-			intermBuffer[buffOffset + 5] = sprite.color.b;
-			intermBuffer[buffOffset + 6] = sprite.color.a;
-			
-			// texture coordinates
-			intermBuffer[buffOffset + 7] = cornerOffsets[i ^ effect].x * sprite.source.width + sprite.source.x;
-			intermBuffer[buffOffset + 8] = cornerOffsets[i ^ effect].y * sprite.source.height + sprite.source.y;
-			
-			intermCount += VERTEX_ELEMENTS; 
-		}
 	}
 	
 	/**
