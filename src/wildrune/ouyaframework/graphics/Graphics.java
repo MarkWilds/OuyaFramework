@@ -1,6 +1,11 @@
 package wildrune.ouyaframework.graphics;
 
-import android.graphics.Rect;
+import static android.opengl.GLES20.GL_BLEND;
+import static android.opengl.GLES20.glEnable;
+import wildrune.ouyaframework.graphics.basic.Rectangle;
+import wildrune.ouyaframework.graphics.states.BlendState;
+import wildrune.ouyaframework.graphics.states.RasterizerState;
+import wildrune.ouyaframework.graphics.states.SamplerState;
 
 /***
  * Class managing the graphics
@@ -9,8 +14,23 @@ import android.graphics.Rect;
  */
 public class Graphics 
 {
-	public Rect viewportNormal;
-	public Rect viewportSafeArea;
+	/**
+	 * Statics
+	 */
+	private final static float SAFE_AREA_RATIO = 0.05f;
+	
+	/**
+	 * Viewports
+	 */
+	public Rectangle viewportNormal;
+	public Rectangle viewportSafeArea;
+	
+	/**
+	 * Current openGL states
+	 */
+	public SamplerState 	currentSamplerState;
+	public BlendState 		currentBlendState;
+	public RasterizerState 	currentRasterizerState;
 	
 	/***
 	 * Default constructor
@@ -18,15 +38,42 @@ public class Graphics
 	public Graphics(int width, int height)
 	{
 		// set normal viewport
-		viewportNormal = new Rect(0, 0, width, height);
+		viewportNormal = new Rectangle(0, 0, width, height);
 		
 		// calculate safe area
-		int leftSafe = (int)(width * 0.05f);
-		int topSafe = (int)(height * 0.05f);
-		int rightSafe = (int)(width - width * 0.05f);
-		int bottomSafe = (int)(height - height * 0.05f);
+		int leftSafe = (int)(width * SAFE_AREA_RATIO);
+		int topSafe = (int)(height * SAFE_AREA_RATIO);
+		int rightSafe = (int)(width - width * SAFE_AREA_RATIO);
+		int bottomSafe = (int)(height - height * SAFE_AREA_RATIO);
 		
 		// set safe area viewport
-		viewportSafeArea = new Rect(leftSafe, topSafe, rightSafe, bottomSafe);
+		viewportSafeArea = new Rectangle(leftSafe, topSafe, rightSafe, bottomSafe);
+	}
+	
+	/**
+	 * Sets and applies the state
+	 * @param state
+	 */
+	public void SetBlendingState(BlendState state)
+	{
+		if(state != currentBlendState)
+		{
+			glEnable(GL_BLEND);
+			currentBlendState = state;
+			state.SetState();
+		}
+	}
+	
+	/**
+	 * Sets and applies the state
+	 * @param state
+	 */
+	public void SetRasterizerState(RasterizerState state)
+	{
+		if(state != currentRasterizerState)
+		{
+			currentRasterizerState = state;
+			state.SetState();
+		}
 	}
 }

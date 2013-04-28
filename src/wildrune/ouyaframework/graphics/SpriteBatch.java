@@ -59,14 +59,14 @@ public class SpriteBatch
 			"attribute vec4 a_color;" +
 			"attribute vec2 a_texcoord_one;" +
 		
-			"uniform mat4 uMVP;" +
+			"uniform mat4 uTransform;" +
 		
 			"varying vec4 v_color;" +
 			"varying vec2 v_texcoord_one;" +
 		
 			"void main()" +
 			"{" +
-				"gl_Position = uMVP * vec4(a_position, 1.0);" +  
+				"gl_Position = uTransform * vec4(a_position, 1.0);" +  
 				"v_color = a_color;" +
 				"v_texcoord_one = a_texcoord_one;" +              
 			"}";
@@ -97,11 +97,6 @@ public class SpriteBatch
 	
 	private float[] intermBuffer;
 	private int		intermCount;
-	
-	// blendstate
-	// samplerstate
-	// depthstencilstate
-	// rasterizerstate
 	
 	private VertexBuffer 	vertexBuffer;
 	private IndexBuffer 	indexBuffer;
@@ -142,7 +137,8 @@ public class SpriteBatch
 		if(!spriteBatchProgram.LinkShaders(vShader, fShader))
 			Log.d(LOG_TAG, "Could not link shaderProgram");
 		
-		matrixLocaton = spriteBatchProgram.GetUniformLocation("uMVP");
+		// set variable locations for shader
+		matrixLocaton = spriteBatchProgram.GetUniformLocation("uTransform");
 		aPosition = spriteBatchProgram.GetAttribLocation("a_position");
 		aColor = spriteBatchProgram.GetAttribLocation("a_color");
 		aTexCoord = spriteBatchProgram.GetAttribLocation("a_texcoord_one");
@@ -157,7 +153,7 @@ public class SpriteBatch
 		CreateIndexValues();
 		
 		// create the transform matrix
-		transformMatrix = Mat4.CreateOrtho2D(graphics.viewportNormal.width(), graphics.viewportNormal.height());
+		transformMatrix = Mat4.CreateOrtho2D( (int)graphics.viewportNormal.width, (int)graphics.viewportNormal.height);
 		
 		// create the sprite queue
 		spriteInfoQueue = new SpriteInfo[initialQueueSize];
@@ -217,7 +213,7 @@ public class SpriteBatch
 	/**
 	 * Start the spritebatch drawing
 	 */
-	public void Begin(SpriteSortMode sortMode/* blendstate, samplerstate, depthstate, rasterizerstate*/)
+	public void Begin(SpriteSortMode sortMode)
 	{
 		// error check
 		if(beginEndPair)

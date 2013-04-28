@@ -36,12 +36,12 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	
 	// ==================== SUBSYSTEMS ==========================
 	public Graphics 		gameGraphics;
-	public FileIO 		gameFileIO;
-	public Audio  		gameAudio;
+	public FileIO 			gameFileIO;
+	public Audio  			gameAudio;
 	private Clock			gameClock;
 	
 	// ===================== GAME TIMER ==========================
-	public Clock.Timer 	gameTimer;
+	public Clock.Timer 		gameTimer;
 	private float			mAccumulatedFrameTime;
 	
 	// =====================  ABSTRACT METHODS ======================
