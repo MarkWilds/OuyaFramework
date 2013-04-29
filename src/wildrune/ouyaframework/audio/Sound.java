@@ -3,9 +3,9 @@ package wildrune.ouyaframework.audio;
 public class Sound 
 {
 	public int soundId;
-	private Audio audio;
+	private AudioSystem audio;
 
-	public Sound(int id, Audio audio)
+	public Sound(int id, AudioSystem audio)
 	{
 		this.soundId = id;
 		this.audio = audio;

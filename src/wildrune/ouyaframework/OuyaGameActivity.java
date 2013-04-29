@@ -5,11 +5,9 @@ import javax.microedition.khronos.opengles.GL10;
 
 import tv.ouya.console.api.OuyaController;
 
-import wildrune.ouyaframework.audio.Audio;
-import wildrune.ouyaframework.graphics.Graphics;
+import wildrune.ouyaframework.audio.AudioSystem;
+import wildrune.ouyaframework.graphics.GraphicsSystem;
 import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
-import wildrune.ouyaframework.system.Clock;
-import wildrune.ouyaframework.system.FileIO;
 
 import android.app.Activity;
 import android.media.AudioManager;
@@ -35,15 +33,16 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	protected boolean isSampling;
 	
 	// ==================== SUBSYSTEMS ==========================
-	public Graphics 		gameGraphics;
-	public FileIO 			gameFileIO;
-	public Audio  			gameAudio;
-	private Clock			gameClock;
-	
+	public GraphicsSystem 	gameGraphics;
+	public FileSystem 		gameFileIO;
+	public AudioSystem  	gameAudio;
+	public ResourceSystem	gameResources;
+
 	// ===================== GAME TIMER ==========================
+	private Clock			gameClock;
 	public Clock.Timer 		gameTimer;
 	private float			mAccumulatedFrameTime;
-	
+
 	// =====================  ABSTRACT METHODS ======================
 	protected abstract void Create();
 	protected abstract void Dispose();
@@ -104,11 +103,13 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		}
 
 		// initialize subsystems
-		gameGraphics = new Graphics(usedWidth, usedHeight);
-		gameFileIO = new FileIO(this);
-		gameAudio = new Audio(this);
+		gameGraphics = new GraphicsSystem(usedWidth, usedHeight);
+		gameFileIO = new FileSystem(this);
+		gameAudio = new AudioSystem(this);
 		gameAudio.Create();
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
+		
+		gameResources = new ResourceSystem(gameFileIO);
 		
 		gameClock = new Clock();
 		gameClock.SetMaxFrameTime(500);

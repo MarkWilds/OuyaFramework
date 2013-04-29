@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.system;
+package wildrune.ouyaframework;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -13,7 +13,7 @@ import wildrune.ouyaframework.graphics.states.SamplerState;
  * @author Wildrune
  *
  */
-public class Graphics 
+public class GraphicsSystem 
 {
 	/**
 	 * Statics
@@ -36,7 +36,7 @@ public class Graphics
 	/***
 	 * Default constructor
 	 */
-	public Graphics(int width, int height)
+	public GraphicsSystem(int width, int height)
 	{
 		// set normal viewport
 		viewportNormal = new Rectangle(0, 0, width, height);

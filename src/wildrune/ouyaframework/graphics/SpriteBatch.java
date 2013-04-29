@@ -125,7 +125,7 @@ public class SpriteBatch
 	/**
 	 * Constructors
 	 */
-	public SpriteBatch(Graphics graphics)
+	public SpriteBatch(GraphicsSystem graphics)
 	{
 		// create the used shader program
 		spriteBatchProgram = new ShaderProgram();

@@ -1,4 +1,4 @@
-package wildrune.ouyaframework.system;
+package wildrune.ouyaframework;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -15,7 +15,7 @@ import android.content.res.AssetManager;
  * @author Wildrune
  *
  */
-public class FileIO 
+public class FileSystem 
 {
 	private Context mContext;
 	
@@ -23,7 +23,7 @@ public class FileIO
 	 * default constructor
 	 * @param context the android context to use
 	 */
-	public FileIO(Context context)
+	public FileSystem(Context context)
 	{
 		mContext = context;
 	}

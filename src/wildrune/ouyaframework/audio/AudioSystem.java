@@ -9,7 +9,7 @@ import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.media.SoundPool;
 
-public class Audio implements IDisposable
+public class AudioSystem implements IDisposable
 {
 	private final static int MAX_SOUNDS = 20;
 	
@@ -19,7 +19,7 @@ public class Audio implements IDisposable
 	
 	private boolean isPaused;
 	
-	public Audio(OuyaGameActivity game)
+	public AudioSystem(OuyaGameActivity game)
 	{
 		this.game = game;
 		isPaused = false;
