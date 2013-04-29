@@ -105,11 +105,10 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		// initialize subsystems
 		gameGraphics = new GraphicsSystem(usedWidth, usedHeight);
 		gameFileIO = new FileSystem(this);
+		gameResources = new ResourceSystem(gameFileIO);
 		gameAudio = new AudioSystem(this);
 		gameAudio.Create();
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
-		
-		gameResources = new ResourceSystem(gameFileIO);
 		
 		gameClock = new Clock();
 		gameClock.SetMaxFrameTime(500);

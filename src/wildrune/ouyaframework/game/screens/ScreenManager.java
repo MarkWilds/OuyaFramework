@@ -3,6 +3,8 @@ package wildrune.ouyaframework.game.screens;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.util.Log;
+
 import wildrune.ouyaframework.OuyaGameActivity;
 import wildrune.ouyaframework.game.screens.GameScreen.ScreenState;
 import wildrune.ouyaframework.graphics.SpriteBatch;
@@ -16,6 +18,7 @@ public class ScreenManager
 	/**
 	 * Static members
 	 */
+	private final static String LOG_TAG = "ScreenManager";
 	private final static int MAX_SCREENS = 8;
 	
 	/**
@@ -50,11 +53,10 @@ public class ScreenManager
 	/**
 	 * Create resources for this screenmanager
 	 */
-	public void Create()
+	public void Create(String blankImageFile)
 	{
 		spriteBatch = new SpriteBatch(game.gameGraphics);
-		
-		// load blank texture
+		blank = game.gameResources.LoadTexture(blankImageFile);
 		
 		initialized = true;
 		
@@ -177,6 +179,12 @@ public class ScreenManager
 	 */
 	public void AddScreen(GameScreen screen, int playerIndex)
 	{
+		if(screens.size() > MAX_SCREENS)
+		{
+			Log.e(LOG_TAG, "Screen limit reached!");
+			return;
+		}
+		
 		screen.playerControlling = playerIndex;
 		screen.screenManager = this;
 		screen.isExiting = false;
