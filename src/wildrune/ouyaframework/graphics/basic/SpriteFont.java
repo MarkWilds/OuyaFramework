@@ -12,7 +12,7 @@ import wildrune.ouyaframework.math.RuneMath;
 import wildrune.ouyaframework.math.Vec2;
 import wildrune.ouyaframework.utils.interfaces.IDisposable;
 
-public class Font implements IDisposable
+public class SpriteFont implements IDisposable
 {
 	public static final String LOG_TAG = "Font";
 	
@@ -41,9 +41,9 @@ public class Font implements IDisposable
 	
 	// intern vars
 	private Glyph[] glyphs;
-	private Rectangle textureRegion;
+	//private Rectangle textureRegion;
 	private Texture2D texture;
-	private int fontPaddingX, fontPaddingY;
+	private int fontPaddingX;//, fontPaddingY;
 	public float fontHeight;
 	
 	public Texture2D GetTexture()
@@ -54,7 +54,7 @@ public class Font implements IDisposable
 	/**
 	 * Initialize glyphs
 	 */
-	public Font()
+	public SpriteFont()
 	{		
 		texture = new Texture2D();
 		
@@ -115,7 +115,8 @@ public class Font implements IDisposable
 			else
 				glyph = glyphs[c - MIN_CHAR];
 			
-			measuredLength += glyph.charWidth +  (i == (textLength-1)? 0 : (fontPaddingX * 2) );
+			//measuredLength += glyph.charWidth +  (i == (textLength-1)? 0 : (fontPaddingX * 2) );
+			measuredLength += glyph.charWidth;
 		}
 		
 		return measuredLength;
@@ -133,7 +134,7 @@ public class Font implements IDisposable
 		float cellWidth, cellHeight;
 		int textureWidth, textureHeight;
 		fontPaddingX = fontPadX;
-		fontPaddingY = fontPadY;
+		//fontPaddingY = fontPadY;
 		
 		// error checks
 		if(typeface == null)
@@ -180,8 +181,8 @@ public class Font implements IDisposable
 			maxCharWidth = width[0];
 		
 		// decide the cell width and height
-		cellWidth = maxCharWidth + (2 * fontPadX) + strokeSize;
-		cellHeight = fontHeight + (2 * fontPadY) + strokeSize;
+		cellWidth = maxCharWidth + (2 * fontPadX) + (2 * strokeSize);
+		cellHeight = fontHeight + (2 * fontPadY) + (2 * strokeSize);
 		int maxSize = (int) (cellWidth > cellHeight? cellWidth : cellHeight);
 		
 		if(maxSize < MIN_FONT_SIZE || maxSize > MAX_FONT_SIZE)
@@ -319,7 +320,7 @@ public class Font implements IDisposable
 					effect);
 			
 			// set new position
-			position.x += (fontPaddingX + glyph.charWidth) * scale + spacing; 
+			position.x += (glyph.charWidth * scale + spacing); 
 		}
 	}
 }

@@ -2,7 +2,7 @@ package wildrune.ouyaframework;
 
 import java.io.InputStream;
 
-import wildrune.ouyaframework.graphics.basic.Font;
+import wildrune.ouyaframework.graphics.basic.SpriteFont;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
 import wildrune.ouyaframework.graphics.states.SamplerState;
 import wildrune.ouyaframework.math.RuneMath;
@@ -36,11 +36,11 @@ public class ResourceSystem
 	/**
 	 * Load a font from a .ttf
 	 */
-	public Font LoadFont(String filePath, boolean aa, int size, int padX, int padY, boolean stroke, int strokeSize)
+	public SpriteFont LoadFont(String filePath, boolean aa, int size, int padX, int padY, boolean stroke, int strokeSize)
 	{
 		// get the typeface for this font
 		Typeface typeface = LoadTypefaceFromAssets( fileIO.GetAssets(), filePath);
-		Font font = new Font();
+		SpriteFont font = new SpriteFont();
 		font.Create(typeface, aa, size, padX, padY, stroke, strokeSize);
 		
 		return font;

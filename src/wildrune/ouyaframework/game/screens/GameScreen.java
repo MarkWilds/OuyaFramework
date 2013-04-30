@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.game.screens;
 
+import android.util.Log;
+
 /**
  * Represents a game state in the game
  * @author Wildrune
@@ -7,10 +9,12 @@ package wildrune.ouyaframework.game.screens;
  */
 public abstract class GameScreen 
 {
+	private final static String LOG_TAG = "GameScreen";
+	
 	/**
 	 * Screen states
 	 */
-	enum ScreenState
+	public enum ScreenState
 	{
 		TRANSITION_ON,
 		TRANSITION_OFF,
@@ -25,48 +29,48 @@ public abstract class GameScreen
      * popup, in which case screens underneath it do not need to bother
      * transitioning off.
 	 */
-	public boolean isPopup;
+	public boolean isPopup = false;
 	
 	/**
 	 * Indicates how long it takes to transition on when it is activated
 	 */
-	public float transitionOnTime;
+	public float transitionOnTime = 0.0f;
 	
 	/**
 	 * Indicates how long it takes to transition off when it is deactivated
 	 */
-	public float transitionOffTime;
+	public float transitionOffTime = 0.0f;
 	
 	/**
 	 * Current position of the screen transition
 	 * From 0 (fully active, no transition) to one (transitioned fully off to nothing)
 	 */
-	public float transitionPosition;
+	public float transitionPosition = 1.0f;
 	
 	/**
 	 * Indicates if this screen is exiting
 	 */
-	public boolean isExiting;
+	public boolean isExiting = false;
 	
 	/**
 	 * Indicates if an other screen has focus
 	 */
-	public boolean otherScreenHasFocus;
+	public boolean otherScreenHasFocus = false;
 	
 	/**
 	 * Indicates the controlling player
 	 */
-	public int playerControlling;
+	public int controllingPlayer = 0;
 	
 	/**
 	 * Current screen state
 	 */
-	public ScreenState screenState;
+	public ScreenState screenState = ScreenState.TRANSITION_ON;
 	
 	/**
 	 * The screenmanager this screen belongs too
 	 */
-	public ScreenManager screenManager;
+	public ScreenManager screenManager = null;
 	
 	/**
 	 * Abstract methods
@@ -100,7 +104,7 @@ public abstract class GameScreen
 		}
 		else if(coveredByOtherScreen)
 		{
-			// if the s	creen is covered by another it should transition off
+			// if the screen is covered by another it should transition off
 			if(UpdateTransition(dt, transitionOffTime, 1))
 			{
 				// still busy transitioning
@@ -114,8 +118,8 @@ public abstract class GameScreen
 		}
 		else
 		{
-			// otherwise the screen should tranisition on and become active
-			if(UpdateTransition(dt, transitionOnTime, 1))
+			// otherwise the screen should transition on and become active
+			if(UpdateTransition(dt, transitionOnTime, -1))
 			{
 				// still busy transitioning
 				screenState = ScreenState.TRANSITION_ON;
@@ -133,24 +137,24 @@ public abstract class GameScreen
 	 */
 	public boolean UpdateTransition(float dt, float time, int direction)
 	{
-		float tranDelta;	
+		float tranDelta;
 		
-		if(dt == 0.0f)
+		if(time == 0.0f)
 			tranDelta = 1.0f;
 		else
-			tranDelta = (dt / time);
+			tranDelta = dt / time;
 		
 		// update transition position
 		transitionPosition += tranDelta * direction;
 			
-		//did we reach the end	 of the transition
-		if( (direction < 0 && transitionPosition <= 1.0f) 	||
+		//did we reach the end of the transition
+		if( (direction < 0 && transitionPosition <= 0.0f) 	||
 				(direction > 0 && transitionPosition >= 1.0f) )
 		{
 			// clamp position
-			if(transitionPosition <= 0.0f)
+			if(transitionPosition < 0.0f)
 				transitionPosition = 0.0f;
-			else if ( transitionPosition >= 1.0f)
+			else if ( transitionPosition > 1.0f)
 				transitionPosition = 1.0f;
 			
 			return false;
@@ -162,7 +166,6 @@ public abstract class GameScreen
 	/**
 	 * Current alpha of the screen transition, ranging from
 	 * 1 (fully active, no transition) to 0 (transitioned fully off to nothing)
-	 * 1.0f - transitionPosion
 	 */
 	public float GetTransitionAlpha()
 	{
@@ -176,6 +179,14 @@ public abstract class GameScreen
 	{
 		return !otherScreenHasFocus && 
 				(screenState == ScreenState.TRANSITION_ON || screenState == ScreenState.ACTIVE);
+	}
+	
+	/**
+	 * Tell if this screen is currently transisioning
+	 */
+	public boolean IsTransisioning()
+	{
+		return screenState == ScreenState.TRANSITION_ON || screenState == ScreenState.TRANSITION_OFF;
 	}
 	
 	/**

@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 
 import wildrune.ouyaframework.graphics.basic.*;
+import wildrune.ouyaframework.graphics.states.BlendState;
 import wildrune.ouyaframework.math.*;
 import android.util.Log;
 
@@ -79,14 +80,16 @@ public class SpriteBatch
 			"varying vec2 v_texcoord_one;" +
 			"void main()" +
 			"{" +
-				"vec4 newColor = v_color * texture2D(u_texture_one, v_texcoord_one );" +
-				"gl_FragColor = newColor;" +
+				"gl_FragColor = v_color * texture2D(u_texture_one, v_texcoord_one );" +
 			"}";
 	
 	// comparators
 	private final TextureComp TexComp = new TextureComp();
 	private final BackToFrontComp BackFrontComp = new BackToFrontComp();
 	private final FrontToBackComp FrontBackComp = new FrontToBackComp();
+	
+	// graphics states
+	BlendState currentBlendState;
 	
 	// members
 	private SpriteInfo[] 	spriteInfoQueue;
@@ -213,7 +216,7 @@ public class SpriteBatch
 	/**
 	 * Start the spritebatch drawing
 	 */
-	public void Begin(SpriteSortMode sortMode)
+	public void Begin(SpriteSortMode sortMode, BlendState blendState)
 	{
 		// error check
 		if(beginEndPair)
@@ -223,6 +226,7 @@ public class SpriteBatch
 		}
 		
 		// set state
+		currentBlendState = blendState;
 		spriteSortMode = sortMode;
 		
 		// set start batching
@@ -237,9 +241,17 @@ public class SpriteBatch
 	/**
 	 * Start the spritebatch drawing
 	 */
+	public void Begin(BlendState blendstate)
+	{
+		this.Begin(this.spriteSortMode, blendstate);
+	}
+	
+	/**
+	 * Start the spritebatch drawing
+	 */
 	public void Begin()
 	{
-		this.Begin(this.spriteSortMode);
+		this.Begin(this.spriteSortMode, BlendState.NonPremultiplied);
 	}
 	
 	/**
@@ -309,6 +321,7 @@ public class SpriteBatch
 	/**
 	 * Sort the queue based on the sprite sort mode
 	 */
+	@SuppressWarnings("unused")
 	private void SortSprites() 
 	{
 		switch(spriteSortMode)
@@ -344,6 +357,9 @@ public class SpriteBatch
 		
 		// set indexbuffer
 		indexBuffer.Bind();
+		
+		// set graphic states
+		currentBlendState.SetState();
 	}
 	
 	/**
@@ -514,7 +530,7 @@ public class SpriteBatch
 		// get spriteInfo reference
 		SpriteInfo spriteInfo = spriteInfoQueue[spriteQueueCount];
 		
-		// set destionation
+		// set destination
 		spriteInfo.destination.x = destLeft;
 		spriteInfo.destination.y = destTop;
 		spriteInfo.destination.width = destRight;
@@ -631,7 +647,7 @@ public class SpriteBatch
 	/**
 	 * Draws text
 	 */
-	public void DrawText(Font font, String text, Vec2 position)
+	public void DrawText(SpriteFont font, String text, Vec2 position)
 	{
 		font.DrawText(this, text, position, Color.WHITE, 1.0f, 0.0f, 0.0f, SpriteEffect.NONE);
 	}
@@ -639,7 +655,7 @@ public class SpriteBatch
 	/**
 	 * Draws text
 	 */
-	public void DrawText(Font font, String text, Vec2 position, Color color)
+	public void DrawText(SpriteFont font, String text, Vec2 position, Color color)
 	{
 		font.DrawText(this, text, position, color, 1.0f, 0.0f, 0.0f, SpriteEffect.NONE);
 	}
@@ -647,7 +663,7 @@ public class SpriteBatch
 	/**
 	 * Draws text
 	 */
-	public void DrawText(Font font, String text, Vec2 position, Color color, float scale, float rot, float spacing)
+	public void DrawText(SpriteFont font, String text, Vec2 position, Color color, float scale, float rot, float spacing)
 	{
 		font.DrawText(this, text, position, color, scale, rot, spacing, SpriteEffect.NONE);
 	}

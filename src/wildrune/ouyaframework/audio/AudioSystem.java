@@ -44,7 +44,7 @@ public class AudioSystem implements IDisposable
 	 */
 	public Sound LoadSound(String fileName)
 	{
-		AssetFileDescriptor fd = game.gameFileIO.ReadFdFromAssets(fileName);
+		AssetFileDescriptor fd = game.FileIO.ReadFdFromAssets(fileName);
 		int soundId = soundPool.load(fd, 1);
 		
 		return new Sound(soundId, this);
@@ -57,23 +57,18 @@ public class AudioSystem implements IDisposable
 	 */
 	public Music LoadMusic(String fileName)
 	{
-		AssetFileDescriptor fd = game.gameFileIO.ReadFdFromAssets(fileName);
+		AssetFileDescriptor fd = game.FileIO.ReadFdFromAssets(fileName);
 		return new Music(fd);
 	}
 	
 	@Override
 	public void Dispose()
 	{
-		soundPool.release();
-		soundPool = null;
-		
 		if(mediaPlayer.isPlaying())
 			mediaPlayer.stop();
 		
 		mediaPlayer.release();
-		mediaPlayer = null;
-		
-		game = null;
+		soundPool.release();
 	}
 	
 	public void Release(Sound sound)
@@ -114,18 +109,11 @@ public class AudioSystem implements IDisposable
 			return;
 		}
 		
-		if(mediaPlayer.isPlaying())
-		{
-			mediaPlayer.stop();
-		}
-		
 		try 
 		{
 			// set data source
 			AssetFileDescriptor musicFd = music.musicFd;
-			mediaPlayer.setDataSource( musicFd.getFileDescriptor(), 
-					musicFd.getStartOffset(),
-					musicFd.getLength() );
+			mediaPlayer.setDataSource( musicFd.getFileDescriptor(), musicFd.getStartOffset(), musicFd.getLength() );
 			
 			// prepare async
 			mediaPlayer.prepareAsync();

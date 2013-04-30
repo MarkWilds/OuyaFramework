@@ -3,15 +3,14 @@ package wildrune.ouyaframework.game.screens;
 import java.util.ArrayList;
 import java.util.List;
 
-import android.util.Log;
-
 import wildrune.ouyaframework.OuyaGameActivity;
 import wildrune.ouyaframework.game.screens.GameScreen.ScreenState;
 import wildrune.ouyaframework.graphics.SpriteBatch;
 import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
-import wildrune.ouyaframework.graphics.basic.Color;
 import wildrune.ouyaframework.graphics.basic.Rectangle;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
+import wildrune.ouyaframework.graphics.states.BlendState;
+import android.util.Log;
 
 public class ScreenManager 
 {
@@ -24,8 +23,8 @@ public class ScreenManager
 	/**
 	 * data members
 	 */
-	private OuyaGameActivity game;
-	private SpriteBatch spriteBatch;
+	public OuyaGameActivity game;
+	public SpriteBatch spriteBatch;
 	
 	private List<GameScreen> screens;
 	private List<GameScreen> screensToUpdate;
@@ -55,8 +54,8 @@ public class ScreenManager
 	 */
 	public void Create(String blankImageFile)
 	{
-		spriteBatch = new SpriteBatch(game.gameGraphics);
-		blank = game.gameResources.LoadTexture(blankImageFile);
+		spriteBatch = new SpriteBatch(game.Graphics);
+		blank = game.Resources.LoadTexture(blankImageFile);
 		
 		initialized = true;
 		
@@ -120,12 +119,11 @@ public class ScreenManager
 		}
 		
 		// update screens
-		int screensSize = screenCount;
-		while( screenCount > 0)
+		while( screensToUpdate.size() > 0)
 		{
 			// pop the top screen
-			curScreen = screensToUpdate.get(screensSize - 1);
-			screensToUpdate.remove(screensSize - 1);
+			curScreen = screensToUpdate.get(screensToUpdate.size() - 1);
+			screensToUpdate.remove(screensToUpdate.size() - 1);
 			
 			// update the screen
 			curScreen.Update(dt, otherScreenHasFocus, coveredByOtherScreen);
@@ -185,7 +183,7 @@ public class ScreenManager
 			return;
 		}
 		
-		screen.playerControlling = playerIndex;
+		screen.controllingPlayer = playerIndex;
 		screen.screenManager = this;
 		screen.isExiting = false;
 		
@@ -221,18 +219,15 @@ public class ScreenManager
 	 */
 	public void FadeBackBufferToBlack(float alpha)
 	{
-		Rectangle viewport = game.gameGraphics.viewportNormal;
-		Color color = Color.BLACK;
+		Rectangle viewport = game.Graphics.viewportNormal;
 		
 		// draw fullscreen quad
-		spriteBatch.Begin();
-		
+		spriteBatch.Begin(BlendState.AlphaBlend);
 		spriteBatch.DrawSprite(blank,
 				0, 0, viewport.width, viewport.height, 
 				0, 0, blank.width, blank.height, 
-				color.r * alpha, color.g * alpha, color.b * alpha, color.a * alpha, 
+				0.0f, 0.0f, 0.0f, alpha,
 				0.0f, 0.0f, 0.0f, 0.0f, SpriteEffect.NONE);
-		
 		spriteBatch.End();
 	}
 }

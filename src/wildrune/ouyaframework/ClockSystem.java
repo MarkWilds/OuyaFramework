@@ -9,7 +9,7 @@ import java.util.Stack;
  * @author Wildrune
  *
  */
-public class Clock 
+public class ClockSystem 
 {
 	// constants
 	public static final int MAX_TIMERS = 4;
@@ -23,20 +23,20 @@ public class Clock
 	private float mTargetFrameTime;
 	
 	// timer management
-	private List<Clock.Timer> mTimers;
-	private Stack<Clock.Timer> mTimerStack;
+	private List<ClockSystem.Timer> mTimers;
+	private Stack<ClockSystem.Timer> mTimerStack;
 	
 	/***
 	 * Constructor
 	 */
-	public Clock()
+	public ClockSystem()
 	{
 		mPrevTime = 0;
 		mTotalTime = 0.0f;
 		mMaxFrameTime = MAX_FRAME_TIME;
 		mTargetFrameTime = TARGET_FRAME_TIME;
-		mTimers = new ArrayList<Clock.Timer>(MAX_TIMERS);
-		mTimerStack = new Stack<Clock.Timer>();
+		mTimers = new ArrayList<ClockSystem.Timer>(MAX_TIMERS);
+		mTimerStack = new Stack<ClockSystem.Timer>();
 		mTimerStack.ensureCapacity(MAX_TIMERS);
 	}
 	
@@ -79,7 +79,7 @@ public class Clock
 	 * Gets a new timer
 	 * @return
 	 */
-	public Clock.Timer Get() throws RuntimeException
+	public ClockSystem.Timer Get() throws RuntimeException
 	{
 		// check if we can still create a timer
 		if(mTimers.size() >= MAX_TIMERS)
@@ -88,13 +88,13 @@ public class Clock
 		// first check if we have any timers left
 		if(!mTimerStack.isEmpty())
 		{
-			Clock.Timer timer = mTimerStack.pop();
+			ClockSystem.Timer timer = mTimerStack.pop();
 			mTimers.add(timer);
 			return timer;
 		}
 		
 		// if we do not have any timers on the stack create a new one
-		Clock.Timer timer = new Clock.Timer(this);
+		ClockSystem.Timer timer = new ClockSystem.Timer(this);
 		mTimers.add(timer);
 		
 		return timer;
@@ -104,7 +104,7 @@ public class Clock
 	 * Recycles a clock
 	 * @param timer
 	 */
-	public void Recycle(Clock.Timer timer)
+	public void Recycle(ClockSystem.Timer timer)
 	{
 		if(mTimers.contains(timer))
 			mTimers.remove(timer);
@@ -145,7 +145,7 @@ public class Clock
 		// update all timers
 		if(!mTimers.isEmpty())
 		{
-			List<Clock.Timer> localTimers = mTimers;
+			List<ClockSystem.Timer> localTimers = mTimers;
 			int timerLength = mTimers.size();
 			for(int i = 0; i < timerLength; i++)
 			{
@@ -163,7 +163,7 @@ public class Clock
 	 */
 	public class Timer
 	{
-		private Clock		mClock;
+		private ClockSystem		mClock;
 		private float 		mElapsedGameTime;
 		private float		mTotalGameTime;
 		private float		mTimeScale;
@@ -173,7 +173,7 @@ public class Clock
 		 * Overloaded constructor
 		 * @param clock the parent clock
 		 */
-		public Timer(Clock clock)
+		public Timer(ClockSystem clock)
 		{
 			mElapsedGameTime = 0.0f;
 			mTimeScale = 1.0f;
@@ -186,7 +186,7 @@ public class Clock
 		 * Gets the parent clock this timer belongs too
 		 * @return The parent clock
 		 */
-		public Clock GetClock()
+		public ClockSystem GetClock()
 		{
 			return mClock;
 		}

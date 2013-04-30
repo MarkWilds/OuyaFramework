@@ -1,5 +1,8 @@
 package wildrune.ouyaframework;
 
+import static android.opengl.GLES20.GL_SAMPLE_COVERAGE;
+import static android.opengl.GLES20.glEnable;
+
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
@@ -7,6 +10,9 @@ import tv.ouya.console.api.OuyaController;
 
 import wildrune.ouyaframework.audio.AudioSystem;
 import wildrune.ouyaframework.graphics.GraphicsSystem;
+import wildrune.ouyaframework.graphics.basic.Color;
+import wildrune.ouyaframework.graphics.states.BlendState;
+import wildrune.ouyaframework.graphics.states.RasterizerState;
 import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
 
 import android.app.Activity;
@@ -32,16 +38,16 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	protected boolean isLowResMode;
 	protected boolean isSampling;
 	
-	// ==================== SUBSYSTEMS ==========================
-	public GraphicsSystem 	gameGraphics;
-	public FileSystem 		gameFileIO;
-	public AudioSystem  	gameAudio;
-	public ResourceSystem	gameResources;
+	// ==================== SUBSYSTEMS =============================
+	public GraphicsSystem 	Graphics;
+	public FileSystem 		FileIO;
+	public AudioSystem  	Audio;
+	public ResourceSystem	Resources;
 
-	// ===================== GAME TIMER ==========================
-	private Clock			gameClock;
-	public Clock.Timer 		gameTimer;
-	private float			mAccumulatedFrameTime;
+	// ===================== GAME CLOCK/TIMER =======================
+	private ClockSystem			Clock;
+	public ClockSystem.Timer 	gameTimer;
+	private float				mAccumulatedFrameTime;
 
 	// =====================  ABSTRACT METHODS ======================
 	protected abstract void Create();
@@ -49,7 +55,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	protected abstract void Update(float dt);
 	protected abstract void Draw();
 	
-	// =====================  SYSTEM METHODS ======================
+	// =====================  SYSTEM METHODS ========================
 	/***
 	 * Default constructor
 	 */
@@ -81,43 +87,39 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		gameView.setPreserveEGLContextOnPause(true);
 		gameView.setEGLContextClientVersion(2);
 		
-		// if we want anti aliasing
-		if(isSampling)
-		{
+		// set options
+		if(isSampling){
 			gameView.setEGLConfigChooser(new MultisampleConfigChooser());
 		}
-		
-		// set the main view
-		setContentView(gameView);
 
-		// if we want better debug messages
 		if(isDebugMode){
 			gameView.setDebugFlags(GLSurfaceView.DEBUG_CHECK_GL_ERROR | GLSurfaceView.DEBUG_LOG_GL_CALLS);
 		}
 
-		// if we want 720p or 1080p
 		if(isLowResMode){
+			// if we want 720p or 1080p
 			gameView.getHolder().setFixedSize(1280, 720);
 			usedWidth = 1280;
 			usedHeight = 720;
 		}
 
 		// initialize subsystems
-		gameGraphics = new GraphicsSystem(usedWidth, usedHeight);
-		gameFileIO = new FileSystem(this);
-		gameResources = new ResourceSystem(gameFileIO);
-		gameAudio = new AudioSystem(this);
-		gameAudio.Create();
+		Graphics = new GraphicsSystem(usedWidth, usedHeight);
+		FileIO = new FileSystem(this);
+		Resources = new ResourceSystem(FileIO);
+		Audio = new AudioSystem(this);
+		Audio.Create();
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
 		
-		gameClock = new Clock();
-		gameClock.SetMaxFrameTime(500);
-		gameTimer = gameClock.Get();
+		Clock = new ClockSystem();
+		Clock.SetMaxFrameTime(500);
+		gameTimer = Clock.Get();
 		
 		// OUYA initialization
 		OuyaController.init(this);
 
 		// when all configurations are set we start the rendering thread
+		setContentView(gameView);
 		gameView.setRenderer(this);
 	}
 	
@@ -127,18 +129,18 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	@Override
 	protected void onPause() 
 	{
-		super.onPause();
-		gameView.onPause();
-
 		// check if we are finishing or not
 		if(isFinishing())
 		{
-			// release game subsystems
-			gameAudio.Dispose();
-			
 			// release game
 			Dispose();
+			
+			// release game subsystems
+			Audio.Dispose();
 		}
+
+		gameView.onPause();
+		super.onPause();
 	}
 
 	/***
@@ -159,12 +161,23 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	@Override
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) 
 	{			
-		// call subclass create method
-		this.Create();
+		// set basic graphic settings
+		Graphics.SetClearColor(Color.BLACK);
+		Graphics.SetBlendingState(BlendState.Opaque);
+		Graphics.SetRasterizerState(RasterizerState.CullClockwise);
+		Graphics.SetViewport(0, 0, 
+				(int) Graphics.viewportNormal.width, 
+				(int) Graphics.viewportNormal.height);
+		
+		// sample coverage
+		if(isSampling)
+			glEnable(GL_SAMPLE_COVERAGE);
 		
 		// start our clock
-		// IS THIS THE RIGHT PLACE??
-		gameClock.Start();
+		Clock.Start();
+		
+		// call subclass create method
+		Create();
 	}
 
 	/***
@@ -197,13 +210,13 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		}
 		
 		// update clock
-		gameClock.Tick();
+		Clock.Tick();
 		
 		// game timing
 		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
 		
 		// update game
-		float targetFrameTime = gameClock.GetTargetFrameTime();
+		float targetFrameTime = Clock.GetTargetFrameTime();
 		while(mAccumulatedFrameTime >= targetFrameTime)
 		{
 			// set fixed time
