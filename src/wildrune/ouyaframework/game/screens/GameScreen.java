@@ -11,9 +11,7 @@ public abstract class GameScreen
 {
 	private final static String LOG_TAG = "GameScreen";
 	
-	/**
-	 * Screen states
-	 */
+	// Screen states
 	public enum ScreenState
 	{
 		TRANSITION_ON,
@@ -22,55 +20,89 @@ public abstract class GameScreen
 		HIDDEN
 	}
 	
-	/**
-     * Normally when one screen is brought up over the top of another,
-     * the first screen will transition off to make room for the new
-     *  one. This property indicates whether the screen is only a small
-     * popup, in which case screens underneath it do not need to bother
-     * transitioning off.
-	 */
+	// Holds transition data for this gamescreen instance
+	private class Transition
+	{
+		// time for a transition to take
+		public float onTime = 0.0f;
+		public float offTime = 0.0f;
+		
+		// Current position of the screen transition
+		// From 0 (fully active, no transition) to one (transitioned fully off to nothing)
+		public float position = 1.0f;
+		
+		// constructor
+		public Transition(float off, float on)
+		{
+			onTime = on;
+			offTime = off;
+		}
+		
+		// Current alpha of the screen transition, ranging from
+		// (fully active, no transition) to 0 (transitioned fully off to nothing)
+		public float GetTransitionAlpha()
+		{
+			return 1.0f - position;
+		}
+		
+		// Helper for updating the screen transition position
+		public boolean Transit(float dt, float time, int direction)
+		{
+			float tranDelta;
+			
+			if(time == 0.0f)
+				tranDelta = 1.0f;
+			else
+				tranDelta = dt / time;
+			
+			// update transition position
+			position += tranDelta * direction;
+				
+			//did we reach the end of the transition
+			if( (direction < 0 && position <= 0.0f) 	||
+					(direction > 0 && position >= 1.0f) )
+			{
+				// clamp position
+				if(position < 0.0f)
+					position = 0.0f;
+				else if ( position > 1.0f)
+					position = 1.0f;
+				
+				return false;
+			}
+				
+			return true;
+		}
+	}
+	
+	// parent screenmanager
+	public ScreenManager screenManager = null;
+	
+	// Current screen state
+	public ScreenState screenState = ScreenState.TRANSITION_ON;
+	
+	// Transition data for this screen
+	public Transition tranData;
+	
+	// Indicates the controlling player
+	public int controllingPlayer = 0;
+	
+    // Tells the screenmanager that underneath screens do not need to transition off
 	public boolean isPopup = false;
 	
-	/**
-	 * Indicates how long it takes to transition on when it is activated
-	 */
-	public float transitionOnTime = 0.0f;
-	
-	/**
-	 * Indicates how long it takes to transition off when it is deactivated
-	 */
-	public float transitionOffTime = 0.0f;
-	
-	/**
-	 * Current position of the screen transition
-	 * From 0 (fully active, no transition) to one (transitioned fully off to nothing)
-	 */
-	public float transitionPosition = 1.0f;
-	
-	/**
-	 * Indicates if this screen is exiting
-	 */
+	// Indicates if this screen is exiting
 	public boolean isExiting = false;
 	
-	/**
-	 * Indicates if an other screen has focus
-	 */
+	// Indicates if an other screen has focus
 	public boolean otherScreenHasFocus = false;
 	
 	/**
-	 * Indicates the controlling player
+	 * Default constructor
 	 */
-	public int controllingPlayer = 0;
-	
-	/**
-	 * Current screen state
-	 */
-	public ScreenState screenState = ScreenState.TRANSITION_ON;
-	
-	/**
-	 * The screenmanager this screen belongs too
-	 */
-	public ScreenManager screenManager = null;
+	public GameScreen()
+	{
+		tranData = new Transition(0.0f, 0.0f);
+	}
 	
 	/**
 	 * Abstract methods
@@ -78,6 +110,7 @@ public abstract class GameScreen
 	public abstract void Create();
 	public abstract void Dispose();
 
+	public abstract void Update(float dt);
 	public abstract void Draw(float dt);
 	public abstract boolean HandleInput();
 	
@@ -87,7 +120,7 @@ public abstract class GameScreen
 	 * @param otherScreenHasFocus
 	 * @param coveredByOtherScreen
 	 */
-	public void Update(float dt, boolean otherScreenHasFocus, boolean coveredByOtherScreen)
+	public void UpdateScreen(float dt, boolean otherScreenHasFocus, boolean coveredByOtherScreen)
 	{
 		this.otherScreenHasFocus = otherScreenHasFocus;
 		
@@ -96,7 +129,7 @@ public abstract class GameScreen
 			// if the screen is going away to die
 			screenState = ScreenState.TRANSITION_OFF;
 			
-			if(!UpdateTransition(dt, transitionOffTime, 1))
+			if(!tranData.Transit(dt, tranData.offTime, 1))
 			{
 				// remove
 				screenManager.RemoveScreen(this);
@@ -105,7 +138,7 @@ public abstract class GameScreen
 		else if(coveredByOtherScreen)
 		{
 			// if the screen is covered by another it should transition off
-			if(UpdateTransition(dt, transitionOffTime, 1))
+			if(tranData.Transit(dt, tranData.offTime, 1))
 			{
 				// still busy transitioning
 				screenState = ScreenState.TRANSITION_OFF;
@@ -119,7 +152,7 @@ public abstract class GameScreen
 		else
 		{
 			// otherwise the screen should transition on and become active
-			if(UpdateTransition(dt, transitionOnTime, -1))
+			if(tranData.Transit(dt, tranData.onTime, -1))
 			{
 				// still busy transitioning
 				screenState = ScreenState.TRANSITION_ON;
@@ -130,46 +163,9 @@ public abstract class GameScreen
 				screenState = ScreenState.ACTIVE;
 			}
 		}
-	}
-
-	/**
-	 * Helper for updating the screen transition position
-	 */
-	public boolean UpdateTransition(float dt, float time, int direction)
-	{
-		float tranDelta;
 		
-		if(time == 0.0f)
-			tranDelta = 1.0f;
-		else
-			tranDelta = dt / time;
-		
-		// update transition position
-		transitionPosition += tranDelta * direction;
-			
-		//did we reach the end of the transition
-		if( (direction < 0 && transitionPosition <= 0.0f) 	||
-				(direction > 0 && transitionPosition >= 1.0f) )
-		{
-			// clamp position
-			if(transitionPosition < 0.0f)
-				transitionPosition = 0.0f;
-			else if ( transitionPosition > 1.0f)
-				transitionPosition = 1.0f;
-			
-			return false;
-		}
-			
-		return true;
-	}
-	
-	/**
-	 * Current alpha of the screen transition, ranging from
-	 * 1 (fully active, no transition) to 0 (transitioned fully off to nothing)
-	 */
-	public float GetTransitionAlpha()
-	{
-		return 1.0f - transitionPosition;
+		// update the subclass update method
+		Update(dt);
 	}
 	
 	/**
@@ -194,7 +190,7 @@ public abstract class GameScreen
 	 */
 	public void ExitScreen()
 	{
-		if(transitionOffTime == 0.0f)
+		if(tranData.offTime == 0.0f)
 		{
 			//if this screen has a 0 transition off time remove it immediately.
 			screenManager.RemoveScreen(this);

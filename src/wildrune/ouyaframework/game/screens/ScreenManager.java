@@ -18,7 +18,6 @@ public class ScreenManager
 	 * Static members
 	 */
 	private final static String LOG_TAG = "ScreenManager";
-	private final static int MAX_SCREENS = 8;
 	
 	/**
 	 * data members
@@ -45,8 +44,8 @@ public class ScreenManager
 		this.spriteBatch = null;
 		this.blank = null;
 		
-		screens = new ArrayList<GameScreen>(MAX_SCREENS);
-		screensToUpdate = new ArrayList<GameScreen>(MAX_SCREENS);
+		screens = new ArrayList<GameScreen>();
+		screensToUpdate = new ArrayList<GameScreen>();
 	}
 	
 	/**
@@ -112,7 +111,7 @@ public class ScreenManager
 		List<GameScreen> localScreens = screens;
 		int screenCount = localScreens.size();
 		
-		// iterate all screens and put the in the to update list
+		// iterate all screens and put in the to-update list
 		for(int i = 0; i < screenCount; i++)
 		{
 			screensToUpdate.add( localScreens.get(i) );
@@ -126,7 +125,7 @@ public class ScreenManager
 			screensToUpdate.remove(screensToUpdate.size() - 1);
 			
 			// update the screen
-			curScreen.Update(dt, otherScreenHasFocus, coveredByOtherScreen);
+			curScreen.UpdateScreen(dt, otherScreenHasFocus, coveredByOtherScreen);
 			
 			// if this is the first active screen we came across.
 			// give it a change to handle input
@@ -148,6 +147,8 @@ public class ScreenManager
 				}
 			}
 		}
+		
+		// afterwards removal
 	}
 	
 	/**
@@ -177,12 +178,6 @@ public class ScreenManager
 	 */
 	public void AddScreen(GameScreen screen, int playerIndex)
 	{
-		if(screens.size() > MAX_SCREENS)
-		{
-			Log.e(LOG_TAG, "Screen limit reached!");
-			return;
-		}
-		
 		screen.controllingPlayer = playerIndex;
 		screen.screenManager = this;
 		screen.isExiting = false;
