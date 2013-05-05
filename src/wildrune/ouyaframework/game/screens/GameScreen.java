@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.game.screens;
 
+import wildrune.ouyaframework.input.InputSystem;
+
 /**
  * Represents a game state in the game
  * @author Wildrune
@@ -111,7 +113,7 @@ public abstract class GameScreen
 
 	public abstract void Update(float dt);
 	public abstract void Draw(float dt);
-	public abstract boolean HandleInput();
+	public abstract boolean HandleInput(InputSystem input);
 	
 	/**
 	 * Update this screen

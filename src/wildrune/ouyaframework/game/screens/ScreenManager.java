@@ -10,6 +10,7 @@ import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
 import wildrune.ouyaframework.graphics.basic.Rectangle;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
 import wildrune.ouyaframework.graphics.states.BlendState;
+import wildrune.ouyaframework.input.InputSystem;
 
 public class ScreenManager 
 {
@@ -24,6 +25,7 @@ public class ScreenManager
 	 */
 	public OuyaGameActivity game;
 	public SpriteBatch spriteBatch;
+	public InputSystem input;
 	
 	private List<GameScreen> screens;
 	private List<GameScreen> screensToUpdate;
@@ -37,12 +39,13 @@ public class ScreenManager
 	 * Default constructor
 	 * @param game the game this screenmanager belongs too
 	 */
-	public ScreenManager(OuyaGameActivity game)
+	public ScreenManager(OuyaGameActivity game, InputSystem input)
 	{
 		this.game = game;
 		this.initialized = false;
 		this.spriteBatch = null;
 		this.blank = null;
+		this.input = input;
 		
 		screens = new ArrayList<GameScreen>();
 		screensToUpdate = new ArrayList<GameScreen>();
@@ -136,8 +139,9 @@ public class ScreenManager
 				// if not other screen has focus handle the input
 				if(!otherScreenHasFocus)
 				{
-					curScreen.HandleInput();
-					otherScreenHasFocus = true;
+					// if the current screen handles input it has focus
+					if(curScreen.HandleInput(input))
+						otherScreenHasFocus = true;
 				}
 				
 				// if this screen is a popup let the other screens know that need to be updated after
