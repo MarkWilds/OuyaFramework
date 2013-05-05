@@ -39,7 +39,10 @@ public class SpriteFont implements IDisposable
 	private static final int MIN_FONT_SIZE = 14;
 	private static final int MAX_FONT_SIZE = 128;
 	
+	private static final Vec2 tempPos = new Vec2();
+	
 	// intern vars
+	
 	private Glyph[] glyphs;
 	//private Rectangle textureRegion;
 	private Texture2D texture;
@@ -300,6 +303,11 @@ public class SpriteFont implements IDisposable
 	{		
 		// take each character and print it out
 		int textLength = text.length();
+		
+		// set the used position
+		tempPos.x = position.x;
+		tempPos.y = position.y;
+		
 		Glyph glyph;
 		for(int i = 0; i < textLength; i++)
 		{
@@ -313,14 +321,14 @@ public class SpriteFont implements IDisposable
 				glyph = glyphs[c - MIN_CHAR];
 			
 			// create char position
-			batch.DrawSprite(texture, position.x, position.y, glyph.region.width * scale, glyph.region.height * scale, 
+			batch.DrawSprite(texture, tempPos.x, tempPos.y, glyph.region.width * scale, glyph.region.height * scale, 
 					glyph.region.x, glyph.region.y, glyph.region.width, glyph.region.height, 
 					color.r, color.g, color.b, color.a,
 					0, 0, 0, rot,
 					effect);
 			
 			// set new position
-			position.x += (glyph.charWidth * scale + spacing); 
+			tempPos.x += (glyph.charWidth * scale + spacing); 
 		}
 	}
 }

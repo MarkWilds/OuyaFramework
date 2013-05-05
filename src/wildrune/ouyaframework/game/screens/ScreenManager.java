@@ -10,13 +10,13 @@ import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
 import wildrune.ouyaframework.graphics.basic.Rectangle;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
 import wildrune.ouyaframework.graphics.states.BlendState;
-import android.util.Log;
 
 public class ScreenManager 
 {
 	/**
 	 * Static members
 	 */
+	@SuppressWarnings("unused")
 	private final static String LOG_TAG = "ScreenManager";
 	
 	/**

@@ -1,7 +1,5 @@
 package wildrune.ouyaframework.game.screens;
 
-import android.util.Log;
-
 /**
  * Represents a game state in the game
  * @author Wildrune
@@ -9,6 +7,7 @@ import android.util.Log;
  */
 public abstract class GameScreen 
 {
+	@SuppressWarnings("unused")
 	private final static String LOG_TAG = "GameScreen";
 	
 	// Screen states
@@ -21,7 +20,7 @@ public abstract class GameScreen
 	}
 	
 	// Holds transition data for this gamescreen instance
-	private class Transition
+	public class TransitionData
 	{
 		// time for a transition to take
 		public float onTime = 0.0f;
@@ -32,7 +31,7 @@ public abstract class GameScreen
 		public float position = 1.0f;
 		
 		// constructor
-		public Transition(float off, float on)
+		public TransitionData(float off, float on)
 		{
 			onTime = on;
 			offTime = off;
@@ -82,7 +81,7 @@ public abstract class GameScreen
 	public ScreenState screenState = ScreenState.TRANSITION_ON;
 	
 	// Transition data for this screen
-	public Transition tranData;
+	public TransitionData transition;
 	
 	// Indicates the controlling player
 	public int controllingPlayer = 0;
@@ -101,7 +100,7 @@ public abstract class GameScreen
 	 */
 	public GameScreen()
 	{
-		tranData = new Transition(0.0f, 0.0f);
+		transition = new TransitionData(0.0f, 0.0f);
 	}
 	
 	/**
@@ -129,7 +128,7 @@ public abstract class GameScreen
 			// if the screen is going away to die
 			screenState = ScreenState.TRANSITION_OFF;
 			
-			if(!tranData.Transit(dt, tranData.offTime, 1))
+			if(!transition.Transit(dt, transition.offTime, 1))
 			{
 				// remove
 				screenManager.RemoveScreen(this);
@@ -138,7 +137,7 @@ public abstract class GameScreen
 		else if(coveredByOtherScreen)
 		{
 			// if the screen is covered by another it should transition off
-			if(tranData.Transit(dt, tranData.offTime, 1))
+			if(transition.Transit(dt, transition.offTime, 1))
 			{
 				// still busy transitioning
 				screenState = ScreenState.TRANSITION_OFF;
@@ -152,7 +151,7 @@ public abstract class GameScreen
 		else
 		{
 			// otherwise the screen should transition on and become active
-			if(tranData.Transit(dt, tranData.onTime, -1))
+			if(transition.Transit(dt, transition.onTime, -1))
 			{
 				// still busy transitioning
 				screenState = ScreenState.TRANSITION_ON;
@@ -190,7 +189,7 @@ public abstract class GameScreen
 	 */
 	public void ExitScreen()
 	{
-		if(tranData.offTime == 0.0f)
+		if(transition.offTime == 0.0f)
 		{
 			//if this screen has a 0 transition off time remove it immediately.
 			screenManager.RemoveScreen(this);

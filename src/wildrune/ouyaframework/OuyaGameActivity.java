@@ -1,7 +1,6 @@
 package wildrune.ouyaframework;
 
-import static android.opengl.GLES20.GL_SAMPLE_COVERAGE;
-import static android.opengl.GLES20.glEnable;
+import static android.opengl.GLES20.*;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -10,9 +9,6 @@ import tv.ouya.console.api.OuyaController;
 
 import wildrune.ouyaframework.audio.AudioSystem;
 import wildrune.ouyaframework.graphics.GraphicsSystem;
-import wildrune.ouyaframework.graphics.basic.Color;
-import wildrune.ouyaframework.graphics.states.BlendState;
-import wildrune.ouyaframework.graphics.states.RasterizerState;
 import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
 
 import android.app.Activity;
@@ -156,18 +152,13 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	
 	// =====================  GAME METHODS ======================
 	/***
-	 * Called when OpenGL ES is instantiated.
+	 * Called w   hen OpenGL ES is instantiated.
 	 */
 	@Override
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) 
-	{			
-		// set basic graphic settings
-		Graphics.SetClearColor(Color.BLACK);
-		Graphics.SetBlendingState(BlendState.Opaque);
-		Graphics.SetRasterizerState(RasterizerState.CullClockwise);
-		Graphics.SetViewport(0, 0, 
-				(int) Graphics.viewportNormal.width, 
-				(int) Graphics.viewportNormal.height);
+	{		
+		// enable states 
+		glEnable(GL_BLEND);
 		
 		// sample coverage
 		if(isSampling)
