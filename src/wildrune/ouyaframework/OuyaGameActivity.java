@@ -5,11 +5,10 @@ import static android.opengl.GLES20.*;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
-import tv.ouya.console.api.OuyaController;
-
 import wildrune.ouyaframework.audio.AudioSystem;
 import wildrune.ouyaframework.graphics.GraphicsSystem;
 import wildrune.ouyaframework.graphics.utils.MultisampleConfigChooser;
+import wildrune.ouyaframework.input.InputSystem;
 
 import android.app.Activity;
 import android.media.AudioManager;
@@ -39,6 +38,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	public FileSystem 		FileIO;
 	public AudioSystem  	Audio;
 	public ResourceSystem	Resources;
+	public InputSystem		Input;
 
 	// ===================== GAME CLOCK/TIMER =======================
 	private ClockSystem			Clock;
@@ -103,6 +103,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		Graphics = new GraphicsSystem(usedWidth, usedHeight);
 		FileIO = new FileSystem(this);
 		Resources = new ResourceSystem(FileIO);
+		Input = new InputSystem(this);
 		Audio = new AudioSystem(this);
 		Audio.Create();
 		setVolumeControlStream(AudioManager.STREAM_MUSIC);
@@ -112,7 +113,6 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		gameTimer = Clock.Get();
 		
 		// OUYA initialization
-		OuyaController.init(this);
 
 		// when all configurations are set we start the rendering thread
 		setContentView(gameView);
@@ -132,6 +132,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 			Dispose();
 			
 			// release game subsystems
+			Input.Deinit();
 			Audio.Dispose();
 		}
 
@@ -152,7 +153,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	
 	// =====================  GAME METHODS ======================
 	/***
-	 * Called w   hen OpenGL ES is instantiated.
+	 * Called when OpenGL ES is instantiated.
 	 */
 	@Override
 	public void onSurfaceCreated(GL10 gl, EGLConfig config) 
@@ -186,7 +187,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	 */
 	@Override
 	public void onDrawFrame(GL10 gl) 
-	{	
+	{		
 		// check if we are stopping
 		if(isGameStopping && !isFinishing())
 		{
@@ -199,7 +200,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 				}
 			});
 		}
-		
+
 		// update clock
 		Clock.Tick();
 		
@@ -210,6 +211,9 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		float targetFrameTime = Clock.GetTargetFrameTime();
 		while(mAccumulatedFrameTime >= targetFrameTime)
 		{
+			// reset input state
+			Input.UpdateFrame();
+			
 			// set fixed time
 			Update( targetFrameTime / 1000.0f );
 			mAccumulatedFrameTime -= targetFrameTime;
@@ -220,27 +224,27 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 	
 	// =====================  OUYA INPUT ======================
 	/***
-	 * Pass button down events to the OUYAController
+	 * Pass button down events to the InputSystem
 	 */
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) {
-	    return OuyaController.onKeyDown(keyCode, event);
+	    return Input.onKeyDown(keyCode, event);
 	}
 
 	/***
-	 * Pass button up events to the OUYAController
+	 * Pass button up events to the InputSystem
 	 */
 	@Override
 	public boolean onKeyUp(int keyCode, KeyEvent event) {
-	    return OuyaController.onKeyUp(keyCode, event);
+	    return Input.onKeyUp(keyCode, event);
 	}
 
 	/***
-	 * Pass motion events to the OUYAController
+	 * Pass motion events to the InputSystem
 	 */
 	@Override
 	public boolean onGenericMotionEvent(MotionEvent event) {
-	    return OuyaController.onGenericMotionEvent(event);
+	    return Input.onGenericMotionEvent(event);
 	}
 	
 	// =====================  GAME UTIL METHODS ======================

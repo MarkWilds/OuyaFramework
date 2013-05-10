@@ -25,7 +25,6 @@ public class ScreenManager
 	 */
 	public OuyaGameActivity game;
 	public SpriteBatch spriteBatch;
-	public InputSystem input;
 	
 	private List<GameScreen> screens;
 	private List<GameScreen> screensToUpdate;
@@ -39,13 +38,12 @@ public class ScreenManager
 	 * Default constructor
 	 * @param game the game this screenmanager belongs too
 	 */
-	public ScreenManager(OuyaGameActivity game, InputSystem input)
+	public ScreenManager(OuyaGameActivity game)
 	{
 		this.game = game;
 		this.initialized = false;
 		this.spriteBatch = null;
 		this.blank = null;
-		this.input = input;
 		
 		screens = new ArrayList<GameScreen>();
 		screensToUpdate = new ArrayList<GameScreen>();
@@ -140,7 +138,7 @@ public class ScreenManager
 				if(!otherScreenHasFocus)
 				{
 					// if the current screen handles input it has focus
-					if(curScreen.HandleInput(input))
+					if(curScreen.HandleInput(game.Input))
 						otherScreenHasFocus = true;
 				}
 				

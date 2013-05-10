@@ -1,5 +1,7 @@
 package wildrune.ouyaframework.game.menus;
 
+import wildrune.ouyaframework.input.Gamepad;
+import wildrune.ouyaframework.input.GamepadCodes;
 import wildrune.ouyaframework.input.InputSystem;
 import wildrune.ouyaframework.graphics.SpriteBatch;
 
@@ -22,30 +24,6 @@ public class ConsoleMenu extends ScreenElement
 		menuItemsCount = 0;
 		selectedItem = 0;
 		heightSpacing = spacing;
-	}
-	
-	public void AddItem(ScreenElement element)
-	{
-		if(menuItemsCount >= maxMenuItems)
-			return;
-		
-		menuItems[menuItemsCount++] = element;
-	}
-	
-	private void SelectPrev()
-	{
-		selectedItem++;
-		
-		if(selectedItem < 0)
-			selectedItem = menuItemsCount;
-	}
-	
-	private void SelectNext()
-	{
-		selectedItem++;
-		
-		if(selectedItem > menuItemsCount)
-			selectedItem = 0;
 	}
 
 	@Override
@@ -79,11 +57,59 @@ public class ConsoleMenu extends ScreenElement
 	@Override
 	public boolean HandleInput(InputSystem input) 
 	{
+		//Gamepad pad = input.GetGamepad(0);
+		ScreenElement selected = GetSelected();
+		/*
 		// handle selection
-		if(menuItems[this.selectedItem].HandleInput(input))
+		if(!selected.HandleInput(input))
+		{
+			if(pad.GetButtonDown(GamepadCodes.BUTTON_DPAD_DOWN))
+			{
+				SelectNext();
 				return true;
-		
-		return false;
-	}
+			}
+			else if(pad.GetButtonDown(GamepadCodes.BUTTON_DPAD_UP))
+			{
+				SelectPrev();
+				return true;
+			}
 
+			return false;
+		}
+		
+		return false;*/
+		
+		return selected.HandleInput(input);
+	}
+	
+	public void AddItem(ScreenElement element)
+	{
+		if(menuItemsCount >= maxMenuItems)
+			return;
+		
+		menuItems[menuItemsCount] = element;
+		menuItemsCount++;
+	}
+	
+	public void SelectPrev()
+	{
+		selectedItem--;
+		
+		if(selectedItem < 0)
+			selectedItem = (menuItemsCount - 1);
+	}
+	
+	public void SelectNext()
+	{
+		selectedItem++;
+		
+		if(selectedItem >= menuItemsCount)
+			selectedItem = 0;
+	}
+	
+	public ScreenElement GetSelected()
+	{
+		return ( (menuItemsCount > 0 && selectedItem >= 0 && selectedItem < menuItemsCount) 
+				? menuItems[selectedItem] : null );
+	}
 }
