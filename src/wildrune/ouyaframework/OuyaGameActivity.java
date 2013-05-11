@@ -208,6 +208,7 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
 		
 		// update game
+		// DO AL FRAME DEPENDANT LOGIC IN HERE!!!
 		float targetFrameTime = Clock.GetTargetFrameTime();
 		while(mAccumulatedFrameTime >= targetFrameTime)
 		{

@@ -32,4 +32,22 @@ public class GamepadState
 		rs_y_axis = 0.0f;
 		r2_axis = 0.0f;
 	}
+	
+	/**
+	 * Swap two states around
+	 */
+	public void CopyStateTo(GamepadState dest)
+	{
+		dest.buttonsPressed = buttonsPressed;
+		
+		// left axis
+		dest.l2_axis = l2_axis;
+		dest.ls_x_axis = ls_x_axis;
+		dest.ls_y_axis = ls_y_axis;
+		
+		// right axis
+		dest.r2_axis = r2_axis;
+		dest.rs_x_axis = rs_x_axis;
+		dest.rs_y_axis = rs_y_axis;
+	}
 }

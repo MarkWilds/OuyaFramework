@@ -14,7 +14,7 @@ public class InputSystem
 {
 	// general input variables
 	//private static final String OUYA_GAMEPAD_ID = "OUYA Game Controller";
-	public static final int MAX_GAMEPADS = 1;
+	public static final int MAX_GAMEPADS = 4;
 	
 	private static final String EXTRA_GAMEPAD_DEVICE_ID = "DEVICE_ID";
 	private static final String EXTRA_GAMEPAD_PLAYER_NUM = "PLAYER_NUM";

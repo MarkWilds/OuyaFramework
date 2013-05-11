@@ -30,12 +30,15 @@ public class GamepadCodes
 	public static final int BUTTON_RS_LEFT = 22;
 	public static final int BUTTON_RS_RIGHT = 23;
 	
-	public static final int AXIS_LS_X = 30;
-	public static final int AXIS_LS_Y = 31;
+	// increase when adding buttons
+	public static final int MAX_BUTTONS = BUTTON_RS_RIGHT;
 	
-	public static final int AXIS_RS_X = 32;
-	public static final int AXIS_RS_Y = 33;
+	public static final int AXIS_LS_X = 32;
+	public static final int AXIS_LS_Y = 33;
 	
-	public static final int AXIS_L2 = 34;
-	public static final int AXIS_R2 = 35;
+	public static final int AXIS_RS_X = 34;
+	public static final int AXIS_RS_Y = 35;
+	
+	public static final int AXIS_L2 = 36;
+	public static final int AXIS_R2 = 37;
 }

@@ -3,6 +3,8 @@ package wildrune.ouyaframework.game.menus;
 import wildrune.ouyaframework.graphics.SpriteBatch;
 import wildrune.ouyaframework.graphics.basic.Color;
 import wildrune.ouyaframework.graphics.basic.SpriteFont;
+import wildrune.ouyaframework.input.Gamepad;
+import wildrune.ouyaframework.input.GamepadCodes;
 import wildrune.ouyaframework.input.InputSystem;
 
 public class MenuTextButton extends ScreenElement
@@ -37,13 +39,16 @@ public class MenuTextButton extends ScreenElement
 	public boolean HandleInput(InputSystem input) 
 	{
 		// if we pressed the action button
-		
-		/*if(this.eventHandler != null)
+		Gamepad pad = input.GetGamepad(0);
+		if(pad.GetButtonDown(GamepadCodes.BUTTON_O))
 		{
-			eventHandler.HandleEvent(this);
-			
-			return true;
-		}*/
+			if(this.eventHandler != null)
+			{
+				eventHandler.HandleEvent(this);
+				
+				return true;
+			}
+		}
 		
 		return false;
 	}

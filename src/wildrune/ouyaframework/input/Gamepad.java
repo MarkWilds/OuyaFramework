@@ -1,6 +1,5 @@
 package wildrune.ouyaframework.input;
 
-import android.util.Log;
 import android.util.SparseIntArray;
 import android.view.InputDevice;
 import android.view.KeyEvent;
@@ -14,18 +13,41 @@ import android.view.MotionEvent;
 public class Gamepad 
 {
 	private final static float AXIS_BUTTON_THRESHOLD = 0.5f;
-	private static final float STICK_DEADZONE = 0.25f;
-	
-	private static SparseIntArray GamepadMapper;
+	private static SparseIntArray GAMEPAD_MAPPER;
 	
 	// general info
 	public int deviceId;
 	public int playerIndex;
 	public boolean isConnected;
 	
+	// gamepad states
 	private GamepadState gamepadState;
 	private GamepadState lastState;
 	private GamepadState currentState;
+	
+	static
+	{
+		GAMEPAD_MAPPER = new SparseIntArray(GamepadCodes.MAX_BUTTONS);
+	
+		// initialize the map
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_O, GamepadCodes.BUTTON_O);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_U, GamepadCodes.BUTTON_U);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_Y, GamepadCodes.BUTTON_Y);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_A, GamepadCodes.BUTTON_A);
+		
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_L1, GamepadCodes.BUTTON_L1);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_L2, GamepadCodes.BUTTON_L2);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_R1, GamepadCodes.BUTTON_R1);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_R2, GamepadCodes.BUTTON_R2);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_MENU, GamepadCodes.BUTTON_MENU);
+		
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_DPAD_UP, GamepadCodes.BUTTON_DPAD_UP);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_DPAD_RIGHT, GamepadCodes.BUTTON_DPAD_RIGHT);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_DPAD_DOWN, GamepadCodes.BUTTON_DPAD_DOWN);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_DPAD_LEFT, GamepadCodes.BUTTON_DPAD_LEFT);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_R3, GamepadCodes.BUTTON_R3);
+		GAMEPAD_MAPPER.append(OuyaGamepadCodes.BUTTON_L3, GamepadCodes.BUTTON_L3);
+	}
 	
 	/**
 	 * default constructor
@@ -60,33 +82,14 @@ public class Gamepad
 		synchronized(gamepadState)
 		{
 			// put currentState into lastState
-			CopyState(currentState, lastState);
-	
-			// put gamepadState in currentState
-			CopyState(gamepadState, currentState);
+			// and gamepadState into currentstate
+			currentState.CopyStateTo(lastState);
+			gamepadState.CopyStateTo(currentState);
 		}
 	}
 	
 	/**
-	 * Swap two states around
-	 */
-	private void CopyState(GamepadState source, GamepadState dest)
-	{
-		dest.buttonsPressed = source.buttonsPressed;
-		
-		// left axis
-		dest.l2_axis = source.l2_axis;
-		dest.ls_x_axis = source.ls_x_axis;
-		dest.ls_y_axis = source.ls_y_axis;
-		
-		// right axis
-		dest.r2_axis = source.r2_axis;
-		dest.rs_x_axis = source.rs_x_axis;
-		dest.rs_y_axis = source.rs_y_axis;
-	}
-	
-	/**
-	 * 
+	 * a key is down when lastState = false && currentState = false
 	 * @param code
 	 * @return
 	 */
@@ -97,14 +100,11 @@ public class Gamepad
 		int lastPressed = lastState.buttonsPressed & bitPos;
 		int curPressed = currentState.buttonsPressed & bitPos;
 		
-		//if(( lastPressed == 0 && curPressed > 0))
-			//Log.d("GAMEPAD", "DOWN: " + lastState.buttonsPressed + " / " + currentState.buttonsPressed);
-		
 		return ( lastPressed == 0 && curPressed > 0);
 	}
 	
 	/**
-	 * 
+	 * a key is pressed when lastState = true && currentState = true
 	 * @param code
 	 * @return
 	 */
@@ -119,7 +119,7 @@ public class Gamepad
 	}
 	
 	/**
-	 * 
+	 * a key is up when lastState = true && currentState = false
 	 * @param code
 	 * @return
 	 */
@@ -134,13 +134,29 @@ public class Gamepad
 	}
 	
 	/**
-	 * 
-	 * @param code
-	 * @return
+	 * Returns the raw axis
+	 * @param code the key code to return the axis for
+	 * @return axis value between -1.0 and 1.0
 	 */
 	public float GetAxisRaw(int code)
 	{
-		return 0.0f;
+		switch(code)
+		{
+		case GamepadCodes.AXIS_LS_X:
+			return currentState.ls_x_axis;
+		case GamepadCodes.AXIS_LS_Y:
+			return currentState.ls_y_axis;
+		case GamepadCodes.AXIS_L2:
+			return currentState.l2_axis;
+		case GamepadCodes.AXIS_RS_X:
+			return currentState.rs_x_axis;
+		case GamepadCodes.AXIS_RS_Y:
+			return currentState.rs_y_axis;
+		case GamepadCodes.AXIS_R2:
+			return currentState.r2_axis;
+		default:
+			return 0.0f;
+		}
 	}
 	
 	/**
@@ -158,19 +174,14 @@ public class Gamepad
 	 */
 	public boolean OnKeyDown(int keyCode, KeyEvent event) 
 	{
-		int padCode = (GamepadMapper.get(keyCode) - 1);
+		int padCode = (GAMEPAD_MAPPER.get(keyCode) - 1);
 
 		// error check
-		if(padCode < 0 || padCode > 32 )
+		if(padCode < 0 || padCode >= GamepadCodes.MAX_BUTTONS )
 			return false;
 		
 		// set the button pressed state
-		synchronized(gamepadState)
-		{	
-			int state = gamepadState.buttonsPressed;
-			int bitCode = 1 << padCode;
-			gamepadState.buttonsPressed = state | bitCode;
-		}
+		SetButtonPressed( 1 << padCode , true);
 		
 		return true;
 	}
@@ -180,18 +191,14 @@ public class Gamepad
 	 */
 	public boolean OnKeyUp(int keyCode, KeyEvent event) 
 	{
-		int padCode = (GamepadMapper.get(keyCode) - 1);
+		int padCode = (GAMEPAD_MAPPER.get(keyCode) - 1);
 		
 		// error check
-		if(padCode < 0 || padCode > 32 )
+		if(padCode < 0 || padCode >= GamepadCodes.MAX_BUTTONS )
 			return false;
 		
 		// reset pressed and down
-		synchronized(gamepadState)
-		{	
-			int state = gamepadState.buttonsPressed;
-			gamepadState.buttonsPressed = state & ~(1 << padCode);
-		}
+		SetButtonPressed( 1 << padCode , false);
 		
 		return true;
 	}
@@ -214,8 +221,9 @@ public class Gamepad
 			gamepadState.rs_y_axis = event.getAxisValue(OuyaGamepadCodes.AXIS_RS_Y);
 			gamepadState.r2_axis = event.getAxisValue(OuyaGamepadCodes.AXIS_R2);
 			
-			// check if we have any axis button events
-			ResolveAxisButtons();
+			// simulate dpad with analog sticks
+			SimulateLeftStickDpad();
+			SimulateRightStickDpad();
 			
 			return true;
 		}
@@ -224,38 +232,144 @@ public class Gamepad
 	}
 	
 	/**
-	 * We support axis button emulation when a axis is within a threshold
+	 * Simulate dpad button presses with the left stick
 	 */
-	private void ResolveAxisButtons()
+	private void SimulateLeftStickDpad()
 	{
-		// AXIS_BUTTON_THRESHOLD
+		int bitCode = -1;
 		
-		// check left stick buttons
+		// X Axis
+		if(gamepadState.ls_x_axis < -AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_LEFT - 1);
+		}
+		else if(gamepadState.ls_x_axis > AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_RIGHT - 1);
+		}
 		
-		// check right stick buttons
+		// Y Axis
+		if(gamepadState.ls_y_axis < -AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_UP - 1);
+		}
+		else if(gamepadState.ls_y_axis > AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_DOWN - 1);
+		}
+		
+		// set button state
+		if(bitCode > -1)
+		{
+			SetButtonPressed(bitCode, true);
+			bitCode = -1;
+		}
+		
+		// reset X Axis if needed
+		if(gamepadState.ls_x_axis >= -AXIS_BUTTON_THRESHOLD && gamepadState.ls_x_axis <= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_LEFT - 1);
+		}
+		else if(gamepadState.ls_x_axis <= AXIS_BUTTON_THRESHOLD && gamepadState.ls_x_axis >= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_RIGHT - 1);
+		}
+		
+		// reset Y Axis if needed
+		if(gamepadState.ls_y_axis >= -AXIS_BUTTON_THRESHOLD && gamepadState.ls_y_axis <= 0.0f )
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_UP - 1);
+		}
+		else if(gamepadState.ls_y_axis <= AXIS_BUTTON_THRESHOLD && gamepadState.ls_y_axis >= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_LS_DOWN - 1);
+		}
+		
+		// set button state
+		if(bitCode > -1)
+		{
+			SetButtonPressed(bitCode, false);
+			bitCode = -1;
+		}
 	}
 	
-	static
+	/**
+	 * Simulate dpad button presses with the right stick
+	 */
+	private void SimulateRightStickDpad()
 	{
-		GamepadMapper = new SparseIntArray(32);
+		int bitCode = -1;
+		
+		// X Axis
+		if(gamepadState.rs_x_axis < -AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_LEFT - 1);
+		}
+		else if(gamepadState.rs_x_axis > AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_RIGHT - 1);
+		}
+		
+		// Y Axis
+		if(gamepadState.rs_y_axis < -AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_UP - 1);
+		}
+		else if(gamepadState.rs_y_axis > AXIS_BUTTON_THRESHOLD)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_DOWN - 1);
+		}
+		
+		// set button state
+		if(bitCode > -1)
+		{
+			SetButtonPressed(bitCode, true);
+			bitCode = -1;
+		}
+		
+		// reset X Axis if needed
+		if(gamepadState.rs_x_axis >= -AXIS_BUTTON_THRESHOLD && gamepadState.rs_x_axis <= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_LEFT - 1);
+		}
+		else if(gamepadState.rs_x_axis <= AXIS_BUTTON_THRESHOLD && gamepadState.rs_x_axis >= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_RIGHT - 1);
+		}
+		
+		// reset Y Axis if needed
+		if(gamepadState.rs_y_axis >= -AXIS_BUTTON_THRESHOLD && gamepadState.rs_y_axis <= 0.0f )
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_UP - 1);
+		}
+		else if(gamepadState.rs_y_axis <= AXIS_BUTTON_THRESHOLD && gamepadState.rs_y_axis >= 0.0f)
+		{
+			bitCode = 1 << (GamepadCodes.BUTTON_RS_DOWN - 1);
+		}
+		
+		// set button state
+		if(bitCode > -1)
+		{
+			SetButtonPressed(bitCode, false);
+			bitCode = -1;
+		}
+	}
 	
-		// initialize the map
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_O, GamepadCodes.BUTTON_O);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_U, GamepadCodes.BUTTON_U);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_Y, GamepadCodes.BUTTON_Y);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_A, GamepadCodes.BUTTON_A);
-		
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_L1, GamepadCodes.BUTTON_L1);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_L2, GamepadCodes.BUTTON_L2);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_R1, GamepadCodes.BUTTON_R1);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_R2, GamepadCodes.BUTTON_R2);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_MENU, GamepadCodes.BUTTON_MENU);
-		
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_DPAD_UP, GamepadCodes.BUTTON_DPAD_UP);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_DPAD_RIGHT, GamepadCodes.BUTTON_DPAD_RIGHT);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_DPAD_DOWN, GamepadCodes.BUTTON_DPAD_DOWN);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_DPAD_LEFT, GamepadCodes.BUTTON_DPAD_LEFT);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_R3, GamepadCodes.BUTTON_R3);
-		GamepadMapper.append(OuyaGamepadCodes.BUTTON_L3, GamepadCodes.BUTTON_L3);
+	/**
+	 * Toggles a button pressed state on or off
+	 * @param bitCode the code for the button to set state for
+	 * @param on true if we want to toggle it on else false for toggle off
+	 */
+	private void SetButtonPressed(int bitCode, boolean on)
+	{
+		synchronized(gamepadState)
+		{	
+			int state = gamepadState.buttonsPressed;
+			
+			if(on)
+				gamepadState.buttonsPressed = state | bitCode;
+			else
+				gamepadState.buttonsPressed = state & ~bitCode;
+		}
 	}
 }

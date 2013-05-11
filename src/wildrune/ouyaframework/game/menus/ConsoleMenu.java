@@ -1,7 +1,5 @@
 package wildrune.ouyaframework.game.menus;
 
-import wildrune.ouyaframework.input.Gamepad;
-import wildrune.ouyaframework.input.GamepadCodes;
 import wildrune.ouyaframework.input.InputSystem;
 import wildrune.ouyaframework.graphics.SpriteBatch;
 
@@ -57,28 +55,7 @@ public class ConsoleMenu extends ScreenElement
 	@Override
 	public boolean HandleInput(InputSystem input) 
 	{
-		//Gamepad pad = input.GetGamepad(0);
 		ScreenElement selected = GetSelected();
-		/*
-		// handle selection
-		if(!selected.HandleInput(input))
-		{
-			if(pad.GetButtonDown(GamepadCodes.BUTTON_DPAD_DOWN))
-			{
-				SelectNext();
-				return true;
-			}
-			else if(pad.GetButtonDown(GamepadCodes.BUTTON_DPAD_UP))
-			{
-				SelectPrev();
-				return true;
-			}
-
-			return false;
-		}
-		
-		return false;*/
-		
 		return selected.HandleInput(input);
 	}
 	
