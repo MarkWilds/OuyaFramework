@@ -111,7 +111,6 @@ public abstract class GameScreen
 	public abstract void Create();
 	public abstract void Dispose();
 
-	public abstract void Update(float dt);
 	public abstract void Draw(float dt);
 	public abstract boolean HandleInput(InputSystem input);
 	
@@ -121,7 +120,7 @@ public abstract class GameScreen
 	 * @param otherScreenHasFocus
 	 * @param coveredByOtherScreen
 	 */
-	public void UpdateScreen(float dt, boolean otherScreenHasFocus, boolean coveredByOtherScreen)
+	public void Update(float dt, boolean otherScreenHasFocus, boolean coveredByOtherScreen)
 	{
 		this.otherScreenHasFocus = otherScreenHasFocus;
 		
@@ -164,9 +163,6 @@ public abstract class GameScreen
 				screenState = ScreenState.ACTIVE;
 			}
 		}
-		
-		// update the subclass update method
-		Update(dt);
 	}
 	
 	/**

@@ -90,8 +90,8 @@ public class Gamepad
 	
 	/**
 	 * a key is down when lastState = false && currentState = false
-	 * @param code
-	 * @return
+	 * @param code The gamepad button code
+	 * @return true if the button is down
 	 */
 	public boolean GetButtonDown(int code)
 	{
@@ -105,8 +105,8 @@ public class Gamepad
 	
 	/**
 	 * a key is pressed when lastState = true && currentState = true
-	 * @param code
-	 * @return
+	 * @param code The gamepad button code
+	 * @return true if button is pressed
 	 */
 	public boolean GetButtonPressed(int code)
 	{
@@ -120,8 +120,8 @@ public class Gamepad
 	
 	/**
 	 * a key is up when lastState = true && currentState = false
-	 * @param code
-	 * @return
+	 * @param code The gamepad button code
+	 * @return true if button is up
 	 */
 	public boolean GetButtonUp(int code)
 	{
@@ -158,17 +158,7 @@ public class Gamepad
 			return 0.0f;
 		}
 	}
-	
-	/**
-	 * 
-	 * @param code
-	 * @return
-	 */
-	public float GetAxis(int code)
-	{
-		return 0.0f;
-	}	
-	
+
 	/***
 	 * Handle button down presses
 	 */

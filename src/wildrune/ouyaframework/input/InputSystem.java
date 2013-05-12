@@ -59,6 +59,9 @@ public class InputSystem
 		context.registerReceiver(connectionHandler, connectionFilter);
 	}
 	
+	/**
+	 * Unregister the controller connection or disconnection event listener
+	 */
 	public void Deinit()
 	{
 		// unregister receiver

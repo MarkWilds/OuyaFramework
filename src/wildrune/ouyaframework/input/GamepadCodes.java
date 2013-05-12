@@ -2,6 +2,7 @@ package wildrune.ouyaframework.input;
 
 public class GamepadCodes 
 {
+	// all supported virtual buttons
 	public static final int BUTTON_O = 1;
 	public static final int BUTTON_U = 2;
 	public static final int BUTTON_Y = 3;
@@ -33,6 +34,7 @@ public class GamepadCodes
 	// increase when adding buttons
 	public static final int MAX_BUTTONS = BUTTON_RS_RIGHT;
 	
+	// all supported axis
 	public static final int AXIS_LS_X = 32;
 	public static final int AXIS_LS_Y = 33;
 	

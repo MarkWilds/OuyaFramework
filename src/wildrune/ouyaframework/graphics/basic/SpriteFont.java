@@ -258,7 +258,7 @@ public class SpriteFont implements IDisposable
 		canvas.drawText(character, 0, 1, offsX, offsY, paint);
 		
 		// create the texture
-		texture.Create(bitmap, false, SamplerState.PointClamp);
+		texture.Create(bitmap, false, SamplerState.LinearClamp);
 		bitmap.recycle();
 		
 		// create glyph regions

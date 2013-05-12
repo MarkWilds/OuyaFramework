@@ -126,7 +126,7 @@ public class ScreenManager
 			screensToUpdate.remove(screensToUpdate.size() - 1);
 			
 			// update the screen
-			curScreen.UpdateScreen(dt, otherScreenHasFocus, coveredByOtherScreen);
+			curScreen.Update(dt, otherScreenHasFocus, coveredByOtherScreen);
 			
 			// if this is the first active screen we came across.
 			// give it a change to handle input
@@ -149,8 +149,6 @@ public class ScreenManager
 				}
 			}
 		}
-		
-		// afterwards removal
 	}
 	
 	/**

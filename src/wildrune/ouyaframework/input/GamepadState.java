@@ -1,5 +1,8 @@
 package wildrune.ouyaframework.input;
 
+/**
+ * Represents the state of a gamepad
+ */
 public class GamepadState 
 {
 	// gamepad state
