@@ -2,6 +2,7 @@
 /bin/
 /obj/
 /.settings/
+/.idea/
 
 # Package Files #
 *.jar
@@ -10,3 +11,4 @@
 /res/
 /gen/
 /assets/
+OuyaFramework.iml
