@@ -1,6 +1,7 @@
 *.class
 /bin/
 /obj/
+/.settings/
 
 # Package Files #
 *.jar
