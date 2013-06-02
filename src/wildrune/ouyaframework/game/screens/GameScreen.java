@@ -94,6 +94,9 @@ public abstract class GameScreen
 	// Indicates if this screen is exiting
 	public boolean isExiting = false;
 	
+	// Indicates that this screen has to be removed
+	public boolean hasToBeRemoved = false;
+	
 	// Indicates if an other screen has focus
 	public boolean otherScreenHasFocus = false;
 	
@@ -132,7 +135,8 @@ public abstract class GameScreen
 			if(!transition.Transit(dt, transition.offTime, 1))
 			{
 				// remove
-				screenManager.RemoveScreen(this);
+				//screenManager.RemoveScreen(this);
+				hasToBeRemoved = true;
 			}
 		}
 		else if(coveredByOtherScreen)
@@ -190,7 +194,8 @@ public abstract class GameScreen
 		if(transition.offTime == 0.0f)
 		{
 			//if this screen has a 0 transition off time remove it immediately.
-			screenManager.RemoveScreen(this);
+			//screenManager.RemoveScreen(this);
+			hasToBeRemoved = true;
 		}
 		else
 		{

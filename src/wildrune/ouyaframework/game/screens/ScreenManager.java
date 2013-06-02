@@ -3,6 +3,8 @@ package wildrune.ouyaframework.game.screens;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.util.Log;
+
 import wildrune.ouyaframework.OuyaGameActivity;
 import wildrune.ouyaframework.game.screens.GameScreen.ScreenState;
 import wildrune.ouyaframework.graphics.SpriteBatch;
@@ -10,7 +12,6 @@ import wildrune.ouyaframework.graphics.SpriteBatch.SpriteEffect;
 import wildrune.ouyaframework.graphics.basic.Rectangle;
 import wildrune.ouyaframework.graphics.basic.Texture2D;
 import wildrune.ouyaframework.graphics.states.BlendState;
-import wildrune.ouyaframework.input.InputSystem;
 
 public class ScreenManager 
 {
@@ -28,6 +29,7 @@ public class ScreenManager
 	
 	private List<GameScreen> screens;
 	private List<GameScreen> screensToUpdate;
+	private List<GameScreen> screensToRemove;
 	
 	private boolean initialized;
 	
@@ -47,6 +49,7 @@ public class ScreenManager
 		
 		screens = new ArrayList<GameScreen>();
 		screensToUpdate = new ArrayList<GameScreen>();
+		screensToRemove = new ArrayList<GameScreen>();
 	}
 	
 	/**
@@ -103,8 +106,6 @@ public class ScreenManager
 		boolean coveredByOtherScreen = false;
 		GameScreen curScreen = null;
 		
-		// update input
-		
 		// clear update list
 		screensToUpdate.clear();
 		
@@ -149,6 +150,26 @@ public class ScreenManager
 				}
 			}
 		}
+		
+		// collect the to remove screens
+		screenCount = localScreens.size();
+		for(int i = 0; i < screenCount; i++)
+		{
+			GameScreen screen = localScreens.get(i);
+			
+			if(screen.hasToBeRemoved)
+				screensToRemove.add(screen);
+		}
+		
+		// remove screens that needs to be removed
+		int screensRemoveCount = screensToRemove.size();
+		for(int i = 0; i < screensRemoveCount; i++)
+		{
+			GameScreen screen = screensToRemove.get(i);
+			RemoveScreen(screen);
+		}
+		
+		screensToRemove.clear();
 	}
 	
 	/**
@@ -209,6 +230,17 @@ public class ScreenManager
 	}
 	
 	/**
+	 * Transition off screens or removes them
+	 */
+	public void ExitScreens()
+	{
+		for(int i = 0; i < screens.size(); i++)
+		{
+			screens.get(i).ExitScreen();
+		}
+	}
+	
+	/**
 	 * Fades the backbuffer to black or to white
 	 * @param alpha the alpha value of the fade
 	 */
@@ -224,5 +256,17 @@ public class ScreenManager
 				0.0f, 0.0f, 0.0f, alpha,
 				0.0f, 0.0f, 0.0f, 0.0f, SpriteEffect.NONE);
 		spriteBatch.End();
+	}
+	
+	public void Debug()
+	{
+		int count = screens.size();
+		String screensDebug = "count: " + count + "\n";
+		for(int i = 0; i < count; i++)
+		{
+			screensDebug += screens.get(i) + "\n";
+		}
+		
+		Log.d("ScreenManager", screensDebug);
 	}
 }
