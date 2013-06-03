@@ -205,11 +205,11 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 		Clock.Tick();
 		
 		// game timing
-		mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
+		//mAccumulatedFrameTime += gameTimer.GetElapsedMiliseconds();
 		
 		// update game
 		// DO AL FRAME DEPENDANT LOGIC IN HERE!!!
-		float targetFrameTime = Clock.GetTargetFrameTime();
+		/*float targetFrameTime = Clock.GetTargetFrameTime();
 		while(mAccumulatedFrameTime >= targetFrameTime)
 		{
 			// reset input state
@@ -218,8 +218,9 @@ public abstract class OuyaGameActivity extends Activity implements GLSurfaceView
 			// set fixed time
 			Update( targetFrameTime / 1000.0f );
 			mAccumulatedFrameTime -= targetFrameTime;
-		}
-
+		}*/
+		Input.UpdateFrame();
+		Update( gameTimer.GetElapsedSeconds() );
 		Draw();
 	}
 	
