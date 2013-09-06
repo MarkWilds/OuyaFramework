@@ -178,12 +178,7 @@ public class Vec2
 	 * @return the angle
 	 */
 	public float GetAngle() {
-		float angle = (float) (Math.atan2(this.y, this.x) * RuneMath.TODEG);
-		
-		if(angle < 0)
-			angle += 360.0f;
-		
-		return angle;
+		return (float) (Math.atan2(-this.y, -this.x) * RuneMath.TODEG) + 180.0f;
 	}
 	
 	/***

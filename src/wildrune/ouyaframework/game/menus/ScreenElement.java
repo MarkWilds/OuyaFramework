@@ -6,9 +6,9 @@ import wildrune.ouyaframework.math.Vec2;
 
 public abstract class ScreenElement 
 {
-	public String identifier;
-	public Vec2 position;
-	public boolean isEnabled;
+	public boolean 	isEnabled;
+	public String 	identifier;
+	public Vec2 	position;
 	protected MenuEventHandler eventHandler; 
 	
 	public ScreenElement(String id)

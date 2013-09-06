@@ -321,7 +321,7 @@ public class SpriteBatch
 	/**
 	 * Sort the queue based on the sprite sort mode
 	 */
-	@SuppressWarnings("unused")
+	@SuppressWarnings({ "unused", "incomplete-switch" })
 	private void SortSprites() 
 	{
 		switch(spriteSortMode)
