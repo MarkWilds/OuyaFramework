@@ -130,7 +130,7 @@ public class Vec2
 	 */
 	public Vec2 Normalize() {
 		float length = this.Length();
-		if( RuneMath.IsCloseEnough(length, 0.0f))
+		if( !RuneMath.IsCloseEnough(length, 0.0f))
 		{
 			this.x /= length;
 			this.y /= length;
@@ -156,8 +156,9 @@ public class Vec2
 		float sin = (float) Math.sin(angleDeg * RuneMath.TORAD);
 		
 		// rotate this point
+		float savedX = this.x;
 		this.x = this.x * cos - this.y * sin;
-		this.y = this.y * sin + this.x * cos;
+		this.y = savedX * sin + this.y * cos;
 		
 		return this;
 	}
