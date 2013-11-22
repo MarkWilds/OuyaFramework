@@ -101,6 +101,22 @@ public class InputSystem
 		return gamepads[playerindex];
 	}
 	
+	/***
+	 * Returns the first found connected controller
+	 * @return
+	 */
+	public Gamepad GetFirstConnectedGamepad()
+	{
+		// iterate all gamepads to check for a connected one
+		for(Gamepad pad : gamepads)
+		{
+			if(pad.isConnected)
+				return pad;
+		}
+		
+		return null;
+	}
+	
 	/**
 	 * Gets a gamepad belonging to the deviceId
 	 * @param deviceId the device the gamepad belongs too
